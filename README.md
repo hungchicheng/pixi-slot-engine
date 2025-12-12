@@ -58,10 +58,14 @@ pnpm format:check
 ```
 slotEngine/
 ├── src/
+│   ├── assets/          # Static assets
+│   │   └── images/      # Image files
 │   ├── components/      # Vue components
 │   │   └── PixiCanvas.vue
 │   ├── stores/          # Pinia stores
 │   │   └── game.ts
+│   ├── utils/           # Utility functions
+│   │   └── preloadAssets.ts  # Asset preloading utilities
 │   ├── App.vue          # Root component
 │   ├── main.ts          # Application entry
 │   ├── env.d.ts         # TypeScript environment type definitions

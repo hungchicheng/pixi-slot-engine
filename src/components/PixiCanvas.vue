@@ -6,22 +6,112 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Application, Graphics, Container, Text, TextStyle } from 'pixi.js'
+import { Application, Container, Sprite, Cache, Texture } from 'pixi.js'
 import { useGameStore } from '../stores/game'
+import {
+  preloadSymbolImages,
+  getOriginalTexture,
+  getBlurredTexture,
+  clearSymbolCache,
+  symbolImages,
+} from '../utils/preloadAssets'
 
-interface Circle {
-  graphics: Graphics
-  speedX: number
-  speedY: number
-  radius: number
+interface SymbolSprite {
+  original: Sprite
+  blurred: Sprite
 }
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
 let app: Application | null = null
 let animationId: number | null = null
-let helloText: Text | null = null
-let subtitleText: Text | null = null
+let symbolSprites: SymbolSprite[] = []
+let container: Container | null = null
+
+const SYMBOLS_PER_ROW = 3
+const SYMBOL_SIZE = 75
+const SPACING = 25
+
+// Display all symbols on canvas
+function displaySymbols(): void {
+  if (!app || !container) return
+
+  symbolSprites = symbolImages
+    .map((_, index) => {
+      // Get cached textures
+      const originalTexture = getOriginalTexture(index) as Texture
+      const blurredTexture = getBlurredTexture(index)
+
+      if (!originalTexture || !blurredTexture || !app || !container) {
+        console.warn(`Texture not found for symbol ${index + 1}`)
+        return null
+      }
+
+      // Create original sprite
+      const originalSprite = new Sprite(originalTexture)
+      originalSprite.anchor.set(0.5)
+      originalSprite.width = SYMBOL_SIZE
+      originalSprite.height = SYMBOL_SIZE
+
+      // Create blurred sprite
+      const blurredSprite = new Sprite(blurredTexture)
+      blurredSprite.anchor.set(0.5)
+      blurredSprite.width = SYMBOL_SIZE
+      blurredSprite.height = SYMBOL_SIZE
+      blurredSprite.alpha = 0.7 // Make blurred version more visible
+
+      // Position sprites - show blurred version on left, original on right
+      const row = Math.floor(index / SYMBOLS_PER_ROW)
+      const col = index % SYMBOLS_PER_ROW
+      const startX =
+        (app.screen.width - (SYMBOLS_PER_ROW * (SYMBOL_SIZE + SPACING) - SPACING)) / 2
+      const startY = app.screen.height / 2 - SYMBOL_SIZE
+      const baseX = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+      const y = startY + row * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+
+      // Position blurred version slightly to the left
+      blurredSprite.x = baseX - SYMBOL_SIZE * 0.3
+      blurredSprite.y = y
+
+      // Position original version slightly to the right
+      originalSprite.x = baseX + SYMBOL_SIZE * 0.3
+      originalSprite.y = y
+
+      // Add to container (blurred first, then original)
+      container.addChild(blurredSprite)
+      container.addChild(originalSprite)
+
+      return {
+        original: originalSprite,
+        blurred: blurredSprite,
+      }
+    })
+    .filter((sprite): sprite is SymbolSprite => sprite !== null)
+}
+
+// Reposition symbols on window resize
+function repositionSymbols(): void {
+  if (!app) return
+
+  const startX =
+    (app.screen.width - (SYMBOLS_PER_ROW * (SYMBOL_SIZE + SPACING) - SPACING)) / 2
+  const startY = app.screen.height / 2 - SYMBOL_SIZE
+
+  symbolSprites.forEach((symbol, index) => {
+    const row = Math.floor(index / SYMBOLS_PER_ROW)
+    const col = index % SYMBOLS_PER_ROW
+    const baseX = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+    const y = startY + row * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+
+    // Position blurred version slightly to the left
+    symbol.blurred.x = baseX - SYMBOL_SIZE * 0.3
+    symbol.blurred.y = y
+
+    // Position original version slightly to the right
+    symbol.original.x = baseX + SYMBOL_SIZE * 0.3
+    symbol.original.y = y
+  })
+}
 
 onMounted(async () => {
   if (!canvasRef.value) return
@@ -34,107 +124,37 @@ onMounted(async () => {
     backgroundColor: 0x1a1a2e,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
-    autoDensity: true
+    autoDensity: true,
   })
 
   // Create container
-  const container = new Container()
+  container = new Container()
   app.stage.addChild(container)
 
-  // Create Hello World text
-  const helloStyle = new TextStyle({
-    fontFamily: 'Arial',
-    fontSize: 48,
-    fontWeight: 'bold',
-    fill: ['#ffffff', '#00ff00'], // Gradient color
-    stroke: '#4a1850',
-    strokeThickness: 5,
-    dropShadow: true,
-    dropShadowColor: '#000000',
-    dropShadowBlur: 4,
-    dropShadowAngle: Math.PI / 6,
-    dropShadowDistance: 6,
-  })
+  // Preload all images and create blur versions
+  await preloadSymbolImages(app)
 
-  helloText = new Text('Hello World!', helloStyle)
-  helloText.anchor.set(0.5)
-  helloText.x = app.screen.width / 2
-  helloText.y = app.screen.height / 2 - 50
-  container.addChild(helloText)
-
-  // Create subtitle
-  const subtitleStyle = new TextStyle({
-    fontFamily: 'Arial',
-    fontSize: 24,
-    fill: '#ffffff',
-    align: 'center',
-  })
-
-  subtitleText = new Text('Pixi.js + Vue 3 + TypeScript', subtitleStyle)
-  subtitleText.anchor.set(0.5)
-  subtitleText.x = app.screen.width / 2
-  subtitleText.y = app.screen.height / 2 + 20
-  container.addChild(subtitleText)
-
-  // Create animated circles
-  const circles: Circle[] = []
-  const colors: number[] = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0x6c5ce7]
-
-  for (let i = 0; i < 20; i++) {
-    const circle = new Graphics()
-    const radius = Math.random() * 30 + 10
-    const color = colors[Math.floor(Math.random() * colors.length)]
-
-    circle.beginFill(color)
-    circle.drawCircle(0, 0, radius)
-    circle.endFill()
-    circle.alpha = 0.7
-
-    circle.x = Math.random() * app.screen.width
-    circle.y = Math.random() * app.screen.height
-    
-    const speedX = (Math.random() - 0.5) * 2
-    const speedY = (Math.random() - 0.5) * 2
-    
-    circles.push({
-      graphics: circle,
-      speedX,
-      speedY,
-      radius
-    })
-    
-    container.addChild(circle)
-  }
+  // Display all symbols
+  displaySymbols()
 
   // Animation loop
   const animate = (): void => {
     if (!app) return
-    
+
     if (gameStore.status === 'Paused') {
       animationId = requestAnimationFrame(animate)
       return
     }
 
-    // Add subtle pulsing effect to text
-    if (helloText) {
-      helloText.scale.x = 1 + Math.sin(Date.now() * 0.003) * 0.05
-      helloText.scale.y = 1 + Math.sin(Date.now() * 0.003) * 0.05
-    }
+    // Add subtle rotation and scale animation to symbols
+    symbolSprites.forEach((symbol, index) => {
+      const time = Date.now() * 0.001
+      symbol.original.rotation = Math.sin(time + index) * 0.1
+      symbol.blurred.rotation = Math.sin(time + index) * 0.1
 
-    circles.forEach(circle => {
-      circle.graphics.x += circle.speedX
-      circle.graphics.y += circle.speedY
-
-      // Boundary bounce
-      if (circle.graphics.x - circle.radius < 0 || circle.graphics.x + circle.radius > app!.screen.width) {
-        circle.speedX *= -1
-      }
-      if (circle.graphics.y - circle.radius < 0 || circle.graphics.y + circle.radius > app!.screen.height) {
-        circle.speedY *= -1
-      }
-
-      // Rotation
-      circle.graphics.rotation += 0.01
+      const scale = 1 + Math.sin(time * 2 + index) * 0.05
+      symbol.original.scale.set(scale)
+      symbol.blurred.scale.set(scale)
     })
 
     animationId = requestAnimationFrame(animate)
@@ -146,15 +166,7 @@ onMounted(async () => {
   const handleResize = (): void => {
     if (app && canvasRef.value) {
       app.renderer.resize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)
-      // Update text positions
-      if (helloText) {
-        helloText.x = app.screen.width / 2
-        helloText.y = app.screen.height / 2 - 50
-      }
-      if (subtitleText) {
-        subtitleText.x = app.screen.width / 2
-        subtitleText.y = app.screen.height / 2 + 20
-      }
+      repositionSymbols()
     }
   }
 
@@ -166,6 +178,8 @@ onUnmounted(() => {
     cancelAnimationFrame(animationId)
   }
   if (app) {
+    clearSymbolCache()
+    Cache.reset()
     app.destroy(true)
   }
 })
