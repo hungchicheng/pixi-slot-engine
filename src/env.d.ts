@@ -31,4 +31,11 @@ declare module '*.svg' {
   export default src
 }
 
+// Pixi.js DevTools support
+declare global {
+  interface Window {
+    __PIXI_APP__?: any
+  }
+}
+
 

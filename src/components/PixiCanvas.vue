@@ -16,100 +16,83 @@ import {
   symbolImages,
 } from '../utils/preloadAssets'
 
-interface SymbolSprite {
-  original: Sprite
-  blurred: Sprite
-}
-
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
 let app: Application | null = null
 let animationId: number | null = null
-let symbolSprites: SymbolSprite[] = []
+let symbolSprites: Sprite[] = []
 let container: Container | null = null
 
-const SYMBOLS_PER_ROW = 3
-const SYMBOL_SIZE = 75
-const SPACING = 25
+const SYMBOLS_PER_ROW = 4
+const SYMBOL_SIZE = 60
+const SPACING = 60
+const ROW_SPACING = 60
 
-// Display all symbols on canvas
+// Display all symbols on canvas (both original and blurred versions)
 function displaySymbols(): void {
   if (!app || !container) return
 
-  symbolSprites = symbolImages
-    .map((_, index) => {
-      // Get cached textures
-      const originalTexture = getOriginalTexture(index) as Texture
-      const blurredTexture = getBlurredTexture(index)
+  symbolSprites = []
 
-      if (!originalTexture || !blurredTexture || !app || !container) {
-        console.warn(`Texture not found for symbol ${index + 1}`)
-        return null
-      }
+  // First, add all original symbols
+  symbolImages.forEach((_, index) => {
+    const originalTexture = getOriginalTexture(index) as Texture
+    if (!originalTexture || !app || !container) {
+      console.warn(`Original texture not found for symbol ${index + 1}`)
+      return
+    }
 
-      // Create original sprite
-      const originalSprite = new Sprite(originalTexture)
-      originalSprite.anchor.set(0.5)
-      originalSprite.width = SYMBOL_SIZE
-      originalSprite.height = SYMBOL_SIZE
+    const sprite = new Sprite(originalTexture)
+    sprite.anchor.set(0.5)
+    sprite.width = SYMBOL_SIZE
+    sprite.height = SYMBOL_SIZE
+    symbolSprites.push(sprite)
+    container.addChild(sprite)
+  })
 
-      // Create blurred sprite
-      const blurredSprite = new Sprite(blurredTexture)
-      blurredSprite.anchor.set(0.5)
-      blurredSprite.width = SYMBOL_SIZE
-      blurredSprite.height = SYMBOL_SIZE
-      blurredSprite.alpha = 0.7 // Make blurred version more visible
+  // Then, add all blurred symbols
+  symbolImages.forEach((_, index) => {
+    const blurredTexture = getBlurredTexture(index)
+    if (!blurredTexture || !app || !container) {
+      console.warn(`Blurred texture not found for symbol ${index + 1}`)
+      return
+    }
 
-      // Position sprites - show blurred version on left, original on right
-      const row = Math.floor(index / SYMBOLS_PER_ROW)
-      const col = index % SYMBOLS_PER_ROW
-      const startX =
-        (app.screen.width - (SYMBOLS_PER_ROW * (SYMBOL_SIZE + SPACING) - SPACING)) / 2
-      const startY = app.screen.height / 2 - SYMBOL_SIZE
-      const baseX = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
-      const y = startY + row * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+    const sprite = new Sprite(blurredTexture)
+    sprite.anchor.set(0.5)
+    sprite.width = SYMBOL_SIZE
+    sprite.height = SYMBOL_SIZE
+    symbolSprites.push(sprite)
+    container.addChild(sprite)
+  })
 
-      // Position blurred version slightly to the left
-      blurredSprite.x = baseX - SYMBOL_SIZE * 0.3
-      blurredSprite.y = y
-
-      // Position original version slightly to the right
-      originalSprite.x = baseX + SYMBOL_SIZE * 0.3
-      originalSprite.y = y
-
-      // Add to container (blurred first, then original)
-      container.addChild(blurredSprite)
-      container.addChild(originalSprite)
-
-      return {
-        original: originalSprite,
-        blurred: blurredSprite,
-      }
-    })
-    .filter((sprite): sprite is SymbolSprite => sprite !== null)
+  // Position all symbols in a grid
+  repositionSymbols()
 }
 
 // Reposition symbols on window resize
 function repositionSymbols(): void {
   if (!app) return
 
-  const startX =
-    (app.screen.width - (SYMBOLS_PER_ROW * (SYMBOL_SIZE + SPACING) - SPACING)) / 2
-  const startY = app.screen.height / 2 - SYMBOL_SIZE
+  const totalRowWidth = SYMBOLS_PER_ROW * SYMBOL_SIZE + (SYMBOLS_PER_ROW - 1) * SPACING
+  const totalRows = Math.ceil(symbolSprites.length / SYMBOLS_PER_ROW)
+  const totalHeight = totalRows * SYMBOL_SIZE + (totalRows - 1) * ROW_SPACING
 
-  symbolSprites.forEach((symbol, index) => {
+  const startX = (app.screen.width - totalRowWidth) / 2
+  const startY = (app.screen.height - totalHeight) / 2
+
+  symbolSprites.forEach((sprite, index) => {
     const row = Math.floor(index / SYMBOLS_PER_ROW)
     const col = index % SYMBOLS_PER_ROW
-    const baseX = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
-    const y = startY + row * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+    const x = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
+    const y = startY + row * (SYMBOL_SIZE + ROW_SPACING) + SYMBOL_SIZE / 2
 
-    // Position blurred version slightly to the left
-    symbol.blurred.x = baseX - SYMBOL_SIZE * 0.3
-    symbol.blurred.y = y
-
-    // Position original version slightly to the right
-    symbol.original.x = baseX + SYMBOL_SIZE * 0.3
-    symbol.original.y = y
+    sprite.x = x
+    sprite.y = y
+    sprite.rotation = 0 // Ensure no rotation
+    // Maintain width/height instead of resetting scale
+    sprite.width = SYMBOL_SIZE
+    sprite.height = SYMBOL_SIZE
   })
 }
 
@@ -126,6 +109,11 @@ onMounted(async () => {
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
   })
+
+  // Expose app to window for Pixi.js DevTools
+  if (import.meta.env.DEV) {
+    ;(window as any).__PIXI_APP__ = app
+  }
 
   // Create container
   container = new Container()
@@ -146,15 +134,12 @@ onMounted(async () => {
       return
     }
 
-    // Add subtle rotation and scale animation to symbols
-    symbolSprites.forEach((symbol, index) => {
-      const time = Date.now() * 0.001
-      symbol.original.rotation = Math.sin(time + index) * 0.1
-      symbol.blurred.rotation = Math.sin(time + index) * 0.1
-
-      const scale = 1 + Math.sin(time * 2 + index) * 0.05
-      symbol.original.scale.set(scale)
-      symbol.blurred.scale.set(scale)
+    // Keep symbols static and aligned - no rotation or scale animation
+    symbolSprites.forEach((sprite) => {
+      sprite.rotation = 0
+      // Maintain width/height instead of resetting scale
+      sprite.width = SYMBOL_SIZE
+      sprite.height = SYMBOL_SIZE
     })
 
     animationId = requestAnimationFrame(animate)
