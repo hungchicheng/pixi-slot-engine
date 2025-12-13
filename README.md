@@ -61,6 +61,19 @@ slotEngine/
 │   ├── assets/          # Static assets
 │   │   └── images/      # Image files
 │   ├── components/      # Vue components
+│   │   ├── slot-engine/  # Slot engine core
+│   │   │   ├── config/  # Engine configuration
+│   │   │   │   └── slotConfig.ts
+│   │   │   ├── reel/    # Reel system
+│   │   │   │   ├── Reel.ts
+│   │   │   │   ├── ReelTile.ts
+│   │   │   │   └── ReelManager.ts
+│   │   │   ├── animation/  # Animation system
+│   │   │   │   └── AnimationLoop.ts
+│   │   │   ├── types/   # Type definitions
+│   │   │   │   └── index.ts
+│   │   │   ├── SlotEngine.ts  # Main engine class
+│   │   │   └── index.ts  # Engine exports
 │   │   └── PixiCanvas.vue
 │   ├── stores/          # Pinia stores
 │   │   └── game.ts

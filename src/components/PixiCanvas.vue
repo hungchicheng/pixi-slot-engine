@@ -5,98 +5,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Application, Container, Sprite, Cache, Texture } from 'pixi.js'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { Application, Cache } from 'pixi.js'
 import { useGameStore } from '../stores/game'
-import {
-  preloadSymbolImages,
-  getOriginalTexture,
-  getBlurredTexture,
-  clearSymbolCache,
-  symbolImages,
-} from '../utils/preloadAssets'
+import { preloadSymbolImages, clearSymbolCache } from '../utils/preloadAssets'
+import { SlotEngine } from './slot-engine/SlotEngine'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
 let app: Application | null = null
-let animationId: number | null = null
-let symbolSprites: Sprite[] = []
-let container: Container | null = null
+let slotEngine: SlotEngine | null = null
 
-const SYMBOLS_PER_ROW = 4
-const SYMBOL_SIZE = 60
-const SPACING = 60
-const ROW_SPACING = 60
-
-// Display all symbols on canvas (both original and blurred versions)
-function displaySymbols(): void {
-  if (!app || !container) return
-
-  symbolSprites = []
-
-  // First, add all original symbols
-  symbolImages.forEach((_, index) => {
-    const originalTexture = getOriginalTexture(index) as Texture
-    if (!originalTexture || !app || !container) {
-      console.warn(`Original texture not found for symbol ${index + 1}`)
-      return
-    }
-
-    const sprite = new Sprite(originalTexture)
-    sprite.anchor.set(0.5)
-    sprite.width = SYMBOL_SIZE
-    sprite.height = SYMBOL_SIZE
-    symbolSprites.push(sprite)
-    container.addChild(sprite)
-  })
-
-  // Then, add all blurred symbols
-  symbolImages.forEach((_, index) => {
-    const blurredTexture = getBlurredTexture(index)
-    if (!blurredTexture || !app || !container) {
-      console.warn(`Blurred texture not found for symbol ${index + 1}`)
-      return
-    }
-
-    const sprite = new Sprite(blurredTexture)
-    sprite.anchor.set(0.5)
-    sprite.width = SYMBOL_SIZE
-    sprite.height = SYMBOL_SIZE
-    symbolSprites.push(sprite)
-    container.addChild(sprite)
-  })
-
-  // Position all symbols in a grid
-  repositionSymbols()
-}
-
-// Reposition symbols on window resize
-function repositionSymbols(): void {
-  if (!app) return
-
-  const totalRowWidth = SYMBOLS_PER_ROW * SYMBOL_SIZE + (SYMBOLS_PER_ROW - 1) * SPACING
-  const totalRows = Math.ceil(symbolSprites.length / SYMBOLS_PER_ROW)
-  const totalHeight = totalRows * SYMBOL_SIZE + (totalRows - 1) * ROW_SPACING
-
-  const startX = (app.screen.width - totalRowWidth) / 2
-  const startY = (app.screen.height - totalHeight) / 2
-
-  symbolSprites.forEach((sprite, index) => {
-    const row = Math.floor(index / SYMBOLS_PER_ROW)
-    const col = index % SYMBOLS_PER_ROW
-    const x = startX + col * (SYMBOL_SIZE + SPACING) + SYMBOL_SIZE / 2
-    const y = startY + row * (SYMBOL_SIZE + ROW_SPACING) + SYMBOL_SIZE / 2
-
-    sprite.x = x
-    sprite.y = y
-    sprite.rotation = 0 // Ensure no rotation
-    // Maintain width/height instead of resetting scale
-    sprite.width = SYMBOL_SIZE
-    sprite.height = SYMBOL_SIZE
-  })
-}
-
-onMounted(async () => {
+async function handleMounted() {
   if (!canvasRef.value) return
 
   // Create Pixi.js application
@@ -115,57 +35,55 @@ onMounted(async () => {
     ;(window as any).__PIXI_APP__ = app
   }
 
-  // Create container
-  container = new Container()
-  app.stage.addChild(container)
-
-  // Preload all images and create blur versions
+  // Preload all images
   await preloadSymbolImages(app)
 
-  // Display all symbols
-  displaySymbols()
+  // Initialize slot engine
+  slotEngine = new SlotEngine(app)
+  await slotEngine.initialize()
 
-  // Animation loop
-  const animate = (): void => {
-    if (!app) return
-
-    if (gameStore.status === 'Paused') {
-      animationId = requestAnimationFrame(animate)
-      return
-    }
-
-    // Keep symbols static and aligned - no rotation or scale animation
-    symbolSprites.forEach((sprite) => {
-      sprite.rotation = 0
-      // Maintain width/height instead of resetting scale
-      sprite.width = SYMBOL_SIZE
-      sprite.height = SYMBOL_SIZE
-    })
-
-    animationId = requestAnimationFrame(animate)
+  // Watch game status for pause/resume
+  function getStatus() {
+    return gameStore.status
   }
 
-  animate()
+  function handleStatusChange(status: 'Running' | 'Paused') {
+    if (slotEngine) {
+      if (status === 'Paused') {
+        slotEngine.pause()
+      } else {
+        slotEngine.resume()
+      }
+    }
+  }
+
+  watch(getStatus, handleStatusChange)
 
   // Handle window resize
-  const handleResize = (): void => {
-    if (app && canvasRef.value) {
+  function handleResize() {
+    if (app && canvasRef.value && slotEngine) {
       app.renderer.resize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)
-      repositionSymbols()
+      slotEngine.handleResize()
     }
   }
 
   window.addEventListener('resize', handleResize)
-})
+}
 
-onUnmounted(() => {
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId)
+onMounted(handleMounted)
+
+function handleUnmounted() {
+  if (slotEngine) {
+    slotEngine.destroy()
+    slotEngine = null
   }
   if (app) {
     clearSymbolCache()
     Cache.reset()
     app.destroy(true)
+    app = null
   }
-})
+}
+
+onUnmounted(handleUnmounted)
 </script>

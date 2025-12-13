@@ -5,15 +5,15 @@ export const useGameStore = defineStore('game', () => {
   const status = ref<'Running' | 'Paused'>('Running')
   const score = ref<number>(0)
 
-  function toggleStatus(): void {
+  function toggleStatus() {
     status.value = status.value === 'Running' ? 'Paused' : 'Running'
   }
 
-  function incrementScore(): void {
+  function incrementScore() {
     score.value++
   }
 
-  function resetScore(): void {
+  function resetScore() {
     score.value = 0
   }
 

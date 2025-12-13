@@ -9,12 +9,12 @@ import {
 } from 'pixi.js'
 
 // Import images
-import symbol1 from '@/assets/images/symbol-1.png'
-import symbol2 from '@/assets/images/symbol-2.png'
-import symbol3 from '@/assets/images/symbol-3.png'
-import symbol4 from '@/assets/images/symbol-4.png'
-import symbol5 from '@/assets/images/symbol-5.png'
-import symbol6 from '@/assets/images/symbol-6.png'
+import symbol1 from '@/assets/images/slot-engine/symbol-1.png'
+import symbol2 from '@/assets/images/slot-engine/symbol-2.png'
+import symbol3 from '@/assets/images/slot-engine/symbol-3.png'
+import symbol4 from '@/assets/images/slot-engine/symbol-4.png'
+import symbol5 from '@/assets/images/slot-engine/symbol-5.png'
+import symbol6 from '@/assets/images/slot-engine/symbol-6.png'
 
 export const symbolImages = [symbol1, symbol2, symbol3, symbol4, symbol5, symbol6]
 
@@ -28,12 +28,10 @@ export interface PreloadedTextures {
  * @param app - Pixi.js Application instance
  * @returns Promise that resolves when all images are loaded and cached
  */
-export async function preloadSymbolImages(
-  app: Application
-): Promise<PreloadedTextures[]> {
+export async function preloadSymbolImages(app: Application) {
   const blurFilter = new BlurFilter(8)
 
-  const loadPromises = symbolImages.map(async (imagePath, index) => {
+  async function loadImage(imagePath: string, index: number) {
     // Load original texture
     const texture = await Assets.load(imagePath)
 
@@ -56,7 +54,9 @@ export async function preloadSymbolImages(
       original: texture,
       blurred: renderTexture,
     }
-  })
+  }
+
+  const loadPromises = symbolImages.map(loadImage)
 
   const results = await Promise.all(loadPromises)
   console.log('All images preloaded and cached with blur versions')
@@ -66,24 +66,26 @@ export async function preloadSymbolImages(
 /**
  * Get cached original texture by index
  */
-export function getOriginalTexture(index: number): Texture | undefined {
+export function getOriginalTexture(index: number) {
   return Cache.get(`symbol-${index + 1}-original`) as Texture | undefined
 }
 
 /**
  * Get cached blurred texture by index
  */
-export function getBlurredTexture(index: number): RenderTexture | undefined {
+export function getBlurredTexture(index: number) {
   return Cache.get(`symbol-${index + 1}-blurred`) as RenderTexture | undefined
 }
 
 /**
  * Clear all cached symbol textures
  */
-export function clearSymbolCache(): void {
-  symbolImages.forEach((_, index) => {
+export function clearSymbolCache() {
+  function removeCache(_: string, index: number) {
     Cache.remove(`symbol-${index + 1}-original`)
     Cache.remove(`symbol-${index + 1}-blurred`)
-  })
+  }
+
+  symbolImages.forEach(removeCache)
 }
 
