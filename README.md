@@ -103,6 +103,66 @@ slotEngine/
 - ✅ Responsive design
 - ✅ Hot Module Replacement (HMR)
 - ✅ Prettier code formatting
+- ✅ Seamless infinite scrolling slot machine
+- ✅ Object pooling for optimal performance
+
+## Architecture
+
+### Slot Machine Reel System
+
+The slot machine uses an optimized **5-tile object pooling** architecture for seamless infinite scrolling.
+
+#### Why 5 Tiles?
+
+Although only 3 tiles are visible on screen, we need buffer zones to achieve seamless infinite scrolling:
+
+- **Tile 0 (Top Buffer)**: Located above the visible area, ready to enter the screen
+- **Tile 1 (Visible)**: Top row (visible)
+- **Tile 2 (Visible)**: Middle row (visible)
+- **Tile 3 (Visible)**: Bottom row (visible)
+- **Tile 4 (Bottom Buffer)**: Located below the visible area, just left the screen (prevents visual glitches during fast scrolling)
+
+**Summary**: 3 reels × 5 tiles = Only 15 Sprite objects to maintain
+
+#### Object Pooling Logic
+
+Instead of generating hundreds of tiles for spinning, we reuse these 5 objects:
+
+1. **Translation**: Each frame, move all tiles downward (assuming top-to-bottom spinning)
+2. **Boundary Check**: When the bottommost Tile 4 completely exits the screen boundary
+3. **Instant Relocation**: Immediately teleport it to the top (to Tile 0's position)
+4. **Texture Swap**: Change its texture to the next required symbol
+5. **Loop**: Repeat this process, creating the visual illusion of infinite scrolling
+
+#### Visual Structure
+
+Assuming window height is 300px (each tile is 100px):
+
+```
+       [ Y: -100 ]  <-- Tile 0 (Hidden, ready to enter)
+--------------------------  <-- Window Top Edge (Mask Top)
+       [ Y:   0  ]  <-- Tile 1 (Visible)
+       [ Y:  100 ]  <-- Tile 2 (Visible)
+       [ Y:  200 ]  <-- Tile 3 (Visible)
+--------------------------  <-- Window Bottom Edge (Mask Bottom)
+       [ Y:  300 ]  <-- Tile 4 (Hidden, just left, ready to teleport back to top)
+```
+
+#### Alternative Approaches Comparison
+
+| Approach | Tile Count (per reel) | Pros | Cons | Rating |
+|----------|----------------------|------|------|--------|
+| Exactly 3 | 3 | Most memory efficient | Cannot spin. Moving will create blank gaps | ❌ Not feasible |
+| 4 Tiles | 4 (1 buffer + 3 visible) | Works | Logic is tight. If speed is too fast or frame drops (Lag), edge glitches are likely | ⚠️ Barely usable |
+| **5 Tiles** | **5 (1 top + 3 visible + 1 bottom)** | **Best balance** | - | ✅ **Recommended** |
+| Strip Texture | N/A (controlled by texture) | Suitable for blur effects | Complex implementation, requires UV Offset or Tiling Sprite handling, difficult to animate individual symbols (e.g., win flash) | ⚠️ Advanced usage |
+
+#### Performance Benefits
+
+- **Memory Efficient**: Only 15 Sprite objects for a 3×3 slot machine
+- **Smooth Animation**: No gaps or visual glitches even at high speeds
+- **Flexible**: Allows for bounce effects (Back.out easing) and other animations
+- **Scalable**: Easy to adjust speed without performance degradation
 
 ## Development Guide
 

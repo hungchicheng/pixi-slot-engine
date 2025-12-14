@@ -29,6 +29,29 @@ export class ReelManager {
     this.reels.forEach(updateReel)
   }
 
+  startSpin() {
+    function startReelSpin(reel: Reel) {
+      reel.startSpin()
+    }
+
+    this.reels.forEach(startReelSpin)
+  }
+
+  stopSpin(resultIndices: number[]) {
+    if (resultIndices.length !== this.reels.length) {
+      console.warn(
+        `Result indices length (${resultIndices.length}) doesn't match reels count (${this.reels.length})`
+      )
+      return
+    }
+
+    function stopReelSpin(reel: Reel, index: number) {
+      reel.stopSpin(resultIndices[index])
+    }
+
+    this.reels.forEach(stopReelSpin)
+  }
+
   updatePositions() {
     function updatePosition(reel: Reel) {
       reel.updatePositions()

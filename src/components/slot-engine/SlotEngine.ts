@@ -36,6 +36,14 @@ export class SlotEngine {
     }
   }
 
+  startSpin() {
+    this.reelManager.startSpin()
+  }
+
+  stopSpin(resultIndices: number[]) {
+    this.reelManager.stopSpin(resultIndices)
+  }
+
   destroy() {
     this.animationLoop.stop()
     this.reelManager.destroy()
