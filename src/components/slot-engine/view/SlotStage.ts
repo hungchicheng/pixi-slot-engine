@@ -1,8 +1,8 @@
 import { Application, Container } from 'pixi.js'
 import { Reel } from './Reel'
-import { SLOT_CONFIG } from '../config/slotConfig'
+import { SLOT_CONFIG } from '../logic/config'
 
-export class ReelManager {
+export class SlotStage {
   private app: Application
   private container: Container
   private reels: Reel[] = []

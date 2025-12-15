@@ -63,19 +63,23 @@ slotEngine/
 │   │   └── images/      # Image files
 │   ├── components/      # Vue components
 │   │   ├── slot-engine/  # Slot engine core
-│   │   │   ├── config/  # Engine configuration
-│   │   │   │   └── slotConfig.ts
-│   │   │   ├── reel/    # Reel system
-│   │   │   │   ├── Reel.ts
-│   │   │   │   ├── ReelTile.ts
-│   │   │   │   ├── ReelManager.ts
-│   │   │   │   └── reelMachine.ts  # XState state machine
-│   │   │   ├── animation/  # Animation system
-│   │   │   │   └── AnimationLoop.ts
-│   │   │   ├── types/   # Type definitions
-│   │   │   │   └── index.ts
-│   │   │   ├── SlotEngine.ts  # Main engine class
-│   │   │   └── index.ts  # Engine exports
+│   │   │   ├── core/    # Core engine (skeleton)
+│   │   │   │   ├── GameLoop.ts      # Unified Pixi Ticker management
+│   │   │   │   └── SlotEngine.ts    # Main engine class
+│   │   │   ├── logic/   # Brain (Logic layer)
+│   │   │   │   ├── config.ts        # Slot configuration
+│   │   │   │   ├── reelMachine.ts   # XState state machine
+│   │   │   │   └── types.ts         # Logic type definitions
+│   │   │   ├── systems/ # Behavior systems
+│   │   │   │   ├── scrolling.ts     # Y-axis movement & tile reuse logic
+│   │   │   │   ├── layout.ts        # Initial position calculations
+│   │   │   │   └── animation.ts     # Bounce & deceleration formulas
+│   │   │   ├── view/    # Muscle (View layer - Pixi components)
+│   │   │   │   ├── SlotStage.ts     # Main slot stage (manages 3 reels)
+│   │   │   │   ├── Reel.ts          # Single reel container
+│   │   │   │   ├── Tile.ts           # Single symbol sprite
+│   │   │   │   └── types.ts          # View type definitions
+│   │   │   └── index.ts             # Engine exports
 │   │   └── PixiCanvas.vue
 │   ├── stores/          # Pinia stores
 │   │   └── game.ts
@@ -95,6 +99,15 @@ slotEngine/
 └── package.json         # Project configuration
 ```
 
+### Architecture: Brain vs Muscle vs Skeleton Separation
+
+The slot engine follows a clear separation of concerns:
+
+- **`core/` (Skeleton)**: Core infrastructure - GameLoop and SlotEngine coordination
+- **`logic/` (Brain)**: Pure logic layer - XState machines, configuration, no Pixi dependencies
+- **`view/` (Muscle)**: Pure visual layer - Pixi components (Sprite, Container), no complex movement logic
+- **`systems/` (Behavior)**: Systems that make views move - scrolling, layout, animation calculations
+
 ## Features
 
 - ✅ Vue 3 Composition API
@@ -111,6 +124,20 @@ slotEngine/
 - ✅ Accelerating, spinning, and decelerating animations
 
 ## Architecture
+
+### Directory Structure Philosophy
+
+The slot engine follows a **"Brain (Logic) vs Muscle (View) vs Skeleton (Core)"** separation strategy:
+
+- **`core/`** - Core infrastructure that coordinates the entire engine
+- **`logic/`** - Pure logic layer (XState machines, math calculations) - can run unit tests without rendering
+- **`view/`** - Pure visual layer (Pixi Sprite/Container) - only handles visual representation
+- **`systems/`** - Behavior systems that make views move - scrolling, layout, animation calculations
+
+This separation ensures:
+- **Testability**: Logic layer has no Pixi dependencies
+- **Maintainability**: Clear responsibilities for each layer
+- **Performance**: Physical variables stay in systems, not in state machine context
 
 ### Slot Machine Reel System
 

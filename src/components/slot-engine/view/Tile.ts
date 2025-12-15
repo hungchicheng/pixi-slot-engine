@@ -1,7 +1,7 @@
 import { Sprite, Texture, Text, TextStyle } from 'pixi.js'
-import type { ReelTile as IReelTile } from '../types'
+import type { ReelTile as IReelTile } from './types'
 
-export class ReelTile implements IReelTile {
+export class Tile implements IReelTile {
   sprite: Sprite
   textureId: number
   column: number

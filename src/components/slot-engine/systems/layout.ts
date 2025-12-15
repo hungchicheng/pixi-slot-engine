@@ -1,8 +1,8 @@
 import { Application } from 'pixi.js'
-import { ReelTile } from './ReelTile'
-import { SLOT_CONFIG } from '../config/slotConfig'
+import type { Tile } from '../view/Tile'
+import { SLOT_CONFIG } from '../logic/config'
 
-export class ReelPositioning {
+export class LayoutSystem {
   static calculateXPosition(app: Application, column: number): number {
     const { SYMBOL_SIZE, COLUMN_SPACING, COLUMNS } = SLOT_CONFIG
     const totalWidth = COLUMNS * SYMBOL_SIZE + (COLUMNS - 1) * COLUMN_SPACING
@@ -10,7 +10,7 @@ export class ReelPositioning {
     return startX + column * (SYMBOL_SIZE + COLUMN_SPACING) + SYMBOL_SIZE / 2
   }
 
-  static findClosestTileToCenter(tiles: ReelTile[], centerY: number): ReelTile {
+  static findClosestTileToCenter(tiles: Tile[], centerY: number): Tile {
     return tiles.reduce((closest, current) => {
       const closestDist = Math.abs(closest.sprite.y - centerY)
       const currentDist = Math.abs(current.sprite.y - centerY)
@@ -18,7 +18,7 @@ export class ReelPositioning {
     })
   }
 
-  static alignTilesToCenter(tiles: ReelTile[], centerY: number): void {
+  static alignTilesToCenter(tiles: Tile[], centerY: number): void {
     const { SYMBOL_SIZE } = SLOT_CONFIG
 
     // Re-align tiles to proper positions after stopping
@@ -44,7 +44,7 @@ export class ReelPositioning {
     })
   }
 
-  static updateTileXPositions(tiles: ReelTile[], app: Application, column: number): void {
+  static updateTileXPositions(tiles: Tile[], app: Application, column: number): void {
     const x = this.calculateXPosition(app, column)
 
     tiles.forEach((tile) => {

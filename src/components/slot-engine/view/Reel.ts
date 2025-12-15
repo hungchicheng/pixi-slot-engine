@@ -1,20 +1,20 @@
 import { Application, Container, Texture } from 'pixi.js'
 import { createActor } from 'xstate'
-import { ReelTile } from './ReelTile'
-import { SLOT_CONFIG } from '../config/slotConfig'
+import { Tile } from './Tile'
+import { SLOT_CONFIG } from '../logic/config'
 import { getOriginalTexture, symbolImages } from '@/utils/preloadAssets'
-import { ReelPositioning } from './ReelPositioning'
-import { ReelStopAnimation } from './ReelStopAnimation'
-import { ReelScrolling } from './ReelScrolling'
-import { reelMachine } from './reelMachine'
+import { LayoutSystem } from '../systems/layout'
+import { AnimationSystem } from '../systems/animation'
+import { ScrollingSystem } from '../systems/scrolling'
+import { reelMachine } from '../logic/reelMachine'
 
 export class Reel {
   private app: Application
   private container: Container
-  private tiles: ReelTile[] = []
+  private tiles: Tile[] = []
   private column: number
-  private stopAnimation: ReelStopAnimation | null = null
-  private scrolling: ReelScrolling
+  private stopAnimation: AnimationSystem | null = null
+  private scrolling: ScrollingSystem
   
   // XState state machine instance (brain)
   private stateMachine = createActor(reelMachine)
@@ -37,7 +37,7 @@ export class Reel {
     this.app = app
     this.container = container
     this.column = column
-    this.scrolling = new ReelScrolling(app, this.tiles, () => this.getRandomTextureId())
+    this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId())
     
     // Start the state machine
     this.stateMachine.start()
@@ -45,7 +45,7 @@ export class Reel {
 
   initialize(): void {
     const { SYMBOL_SIZE, TILES_PER_COLUMN } = SLOT_CONFIG
-    const x = ReelPositioning.calculateXPosition(this.app, this.column)
+    const x = LayoutSystem.calculateXPosition(this.app, this.column)
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 
@@ -82,7 +82,7 @@ export class Reel {
       // Generate sequence number: column * 1000 + row (to ensure uniqueness)
       const sequenceNumber = this.column * 1000 + row
 
-      const tile = new ReelTile(texture, textureId, this.column, x, y, SYMBOL_SIZE, sequenceNumber)
+      const tile = new Tile(texture, textureId, this.column, x, y, SYMBOL_SIZE, sequenceNumber)
       this.tiles.push(tile)
       this.container.addChild(tile.sprite)
     }
@@ -154,7 +154,7 @@ export class Reel {
       if (!this.stopAnimation) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
-          this.stopAnimation = new ReelStopAnimation(this.app, this.tiles)
+          this.stopAnimation = new AnimationSystem(this.app, this.tiles)
           this.stopAnimation.start(targetIndex)
         }
       }
@@ -179,7 +179,7 @@ export class Reel {
     const centerY = screenHeight / 2
     
     // Find the tile currently closest to center
-    const centerTile = ReelPositioning.findClosestTileToCenter(this.tiles, centerY)
+    const centerTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
     
     // Calculate target position
     // targetIndex: 0 = top visible, 1 = middle visible, 2 = bottom visible
@@ -195,11 +195,11 @@ export class Reel {
   private snapToGrid(): void {
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
-    ReelPositioning.alignTilesToCenter(this.tiles, centerY)
+    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
   }
 
   updatePositions(): void {
-    ReelPositioning.updateTileXPositions(this.tiles, this.app, this.column)
+    LayoutSystem.updateTileXPositions(this.tiles, this.app, this.column)
   }
 
   private getRandomTextureId(): number {
@@ -216,3 +216,4 @@ export class Reel {
     this.tiles = []
   }
 }
+

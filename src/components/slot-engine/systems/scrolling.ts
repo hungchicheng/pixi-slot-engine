@@ -1,14 +1,14 @@
 import { Application, Texture } from 'pixi.js'
-import { ReelTile } from './ReelTile'
-import { SLOT_CONFIG } from '../config/slotConfig'
+import type { Tile } from '../view/Tile'
+import { SLOT_CONFIG } from '../logic/config'
 import { getOriginalTexture } from '@/utils/preloadAssets'
 
-export class ReelScrolling {
+export class ScrollingSystem {
   private app: Application
-  private tiles: ReelTile[]
+  private tiles: Tile[]
   private getRandomTextureId: () => number
 
-  constructor(app: Application, tiles: ReelTile[], getRandomTextureId: () => number) {
+  constructor(app: Application, tiles: Tile[], getRandomTextureId: () => number) {
     this.app = app
     this.tiles = tiles
     this.getRandomTextureId = getRandomTextureId

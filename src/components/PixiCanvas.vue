@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Application, Cache } from 'pixi.js'
 import { useGameStore } from '../stores/game'
 import { preloadSymbolImages, clearSymbolCache } from '@/utils/preloadAssets'
-import { SlotEngine } from './slot-engine/SlotEngine'
+import { SlotEngine } from './slot-engine'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()

@@ -1,15 +1,13 @@
-import { Application } from 'pixi.js'
-import type { ReelManager } from '../reel/ReelManager'
+import type { Application } from 'pixi.js'
+import type { SlotStage } from '../view/SlotStage'
 
-export class AnimationLoop {
-  private app: Application
-  private reelManager: ReelManager
+export class GameLoop {
+  private slotStage: SlotStage
   private animationId: number | null = null
   private isPaused: boolean = false
 
-  constructor(app: Application, reelManager: ReelManager) {
-    this.app = app
-    this.reelManager = reelManager
+  constructor(_app: Application, slotStage: SlotStage) {
+    this.slotStage = slotStage
   }
 
   start() {
@@ -19,14 +17,14 @@ export class AnimationLoop {
     
     const animate = (currentTime: number) => {
       if (!this.isPaused) {
-        const delta = (currentTime - lastTime) / 16.67 // 标准化到 60fps 的 delta
-        this.reelManager.update(delta)
+        const delta = (currentTime - lastTime) / 16.67 // Normalize to 60fps delta
+        this.slotStage.update(delta)
       }
       lastTime = currentTime
       this.animationId = requestAnimationFrame(animate)
     }
 
-    animate()
+    animate(performance.now())
   }
 
   pause() {

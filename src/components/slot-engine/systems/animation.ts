@@ -1,17 +1,17 @@
 import { Application, Texture } from 'pixi.js'
-import { ReelTile } from './ReelTile'
-import { SLOT_CONFIG } from '../config/slotConfig'
+import type { Tile } from '../view/Tile'
+import { SLOT_CONFIG } from '../logic/config'
 import { getOriginalTexture } from '@/utils/preloadAssets'
-import { ReelPositioning } from './ReelPositioning'
+import { LayoutSystem } from './layout'
 
-export class ReelStopAnimation {
+export class AnimationSystem {
   private stopStartY: number = 0
   private stopTargetY: number = 0
   private stopStartTime: number = 0
   private app: Application
-  private tiles: ReelTile[]
+  private tiles: Tile[]
 
-  constructor(app: Application, tiles: ReelTile[]) {
+  constructor(app: Application, tiles: Tile[]) {
     this.app = app
     this.tiles = tiles
   }
@@ -22,7 +22,7 @@ export class ReelStopAnimation {
     const centerY = screenHeight / 2
 
     // Find the tile currently closest to center (should be Tile 2 - middle visible)
-    const centerTile = ReelPositioning.findClosestTileToCenter(this.tiles, centerY)
+    const centerTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
 
     // Calculate how much we need to move all tiles
     // resultIndex: 0 = top visible, 1 = middle visible, 2 = bottom visible
@@ -104,7 +104,7 @@ export class ReelStopAnimation {
     const centerY = screenHeight / 2
 
     // Align tiles to exact positions
-    ReelPositioning.alignTilesToCenter(this.tiles, centerY)
+    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
 
     // Clean up temporary properties
     this.tiles.forEach((tile) => {
