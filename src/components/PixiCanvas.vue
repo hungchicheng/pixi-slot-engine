@@ -10,7 +10,7 @@ const gameStore = useGameStore()
 let app: Application | null = null
 let slotEngine: SlotEngine | null = null
 
-// Expose methods for parent component
+
 function startSpin() {
   if (slotEngine) {
     slotEngine.startSpin()
@@ -27,7 +27,7 @@ function stopSpin() {
   }
 }
 
-// Expose methods to parent
+
 defineExpose({
   startSpin,
   stopSpin,
@@ -36,7 +36,7 @@ defineExpose({
 const handleMounted = async () => {
   if (!canvasRef.value) return
 
-  // Create Pixi.js application
+  // Initialize Pixi
   app = new Application({
     view: canvasRef.value!,
     width: canvasRef.value!.clientWidth,
@@ -47,7 +47,7 @@ const handleMounted = async () => {
     autoDensity: true,
   })
 
-  // Expose app to window for Pixi.js DevTools
+  // DevTools support
   if (import.meta.env.DEV) {
     ;(window as any).__PIXI_APP__ = app
   }
@@ -59,7 +59,7 @@ const handleMounted = async () => {
   slotEngine = new SlotEngine(app)
   await slotEngine.initialize()
 
-  // Watch game status for pause/resume
+  // Game status watcher
   const getStatus = () => {
     return gameStore.status
   }

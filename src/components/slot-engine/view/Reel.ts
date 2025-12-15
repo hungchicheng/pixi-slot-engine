@@ -15,30 +15,26 @@ export class Reel {
   private column: number
   private stopAnimation: AnimationSystem | null = null
   private scrolling: ScrollingSystem
-  
-  // XState state machine instance (brain)
+
+  // State machine
   private stateMachine = createActor(reelMachine)
-  
-  // Physical variables (muscle) - not in XState context for high performance
+
+  // Physics variables
   private speed: number = 0
   private readonly MAX_SPEED: number = SLOT_CONFIG.SPIN_SPEED
   private readonly ACCELERATION: number = 0.5 // Acceleration per frame
   private readonly DECELERATION_FACTOR: number = 0.95 // Deceleration factor
   private readonly MIN_SPEED: number = 0.1 // Minimum speed threshold
-  
+
   // Pre-stop phase calculation variables
-  private preStopDistance: number = 0
   private preStopCalculated: boolean = false
-  
-  // Time tracking (for Guard checks)
-  private spinStartTime: number = 0
 
   constructor(app: Application, container: Container, column: number) {
     this.app = app
     this.container = container
     this.column = column
     this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId())
-    
+
     // Start the state machine
     this.stateMachine.start()
   }
@@ -49,18 +45,12 @@ export class Reel {
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 
-    // Create 5 tiles: 1 top buffer + 3 visible + 1 bottom buffer
-    // Layout: Tile 0 (top buffer) -> Tile 1-3 (visible) -> Tile 4 (bottom buffer)
+    // Create tiles: 1 top buffer + 3 visible + 1 bottom buffer
     for (let row = 0; row < TILES_PER_COLUMN; row++) {
       const textureId = this.getRandomTextureId()
       const texture = getOriginalTexture(textureId) as Texture
       if (!texture) continue
 
-      // Calculate Y position:
-      // Tile 0: top buffer (above screen)
-      // Tile 1-3: visible area (centered around screen center)
-      // Tile 4: bottom buffer (below screen)
-      // All tiles should be spaced exactly SYMBOL_SIZE apart (center to center)
       let y: number
       if (row === 0) {
         // Top buffer: above the visible area
@@ -89,11 +79,9 @@ export class Reel {
   }
 
   startSpin(): void {
-    // Send START event to state machine (will automatically call recordSpinStart action)
     this.stateMachine.send({ type: 'START' })
     this.speed = 0
     this.preStopCalculated = false
-    this.spinStartTime = Date.now()
   }
 
   stopSpin(resultIndex: number): void {
@@ -105,7 +93,7 @@ export class Reel {
   update = (delta: number = 1): void => {
     const currentState = this.stateMachine.getSnapshot()
     const stateValue = currentState.value as string
-    
+
     // Execute corresponding physics logic based on XState state
     if (stateValue === 'idle') {
       this.speed = 0
@@ -129,7 +117,7 @@ export class Reel {
       if (!this.preStopCalculated) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
-          this.calculatePreStopDistance(targetIndex)
+          // this.calculatePreStopDistance(targetIndex)
           this.preStopCalculated = true
           // Notify state machine: calculation complete, can start deceleration
           this.stateMachine.send({ type: 'READY_TO_DECEL' })
@@ -144,7 +132,6 @@ export class Reel {
         this.speed = 0
         // Force alignment to grid
         this.snapToGrid()
-        // Notify state machine: stopped
         this.stateMachine.send({ type: 'STOPPED' })
       } else {
         this.scrolling.updateWithSpeed(this.speed)
@@ -158,7 +145,7 @@ export class Reel {
           this.stopAnimation.start(targetIndex)
         }
       }
-      
+
       if (this.stopAnimation) {
         const isComplete = this.stopAnimation.update()
         if (isComplete) {
@@ -169,26 +156,7 @@ export class Reel {
       }
     }
   }
-  
-  /**
-   * Calculate the distance needed to move in pre-stop phase
-   */
-  private calculatePreStopDistance(targetIndex: number): void {
-    const { SYMBOL_SIZE } = SLOT_CONFIG
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-    
-    // Find the tile currently closest to center
-    const centerTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
-    
-    // Calculate target position
-    // targetIndex: 0 = top visible, 1 = middle visible, 2 = bottom visible
-    // We want the result symbol at center (middle visible position)
-    const currentCenterTileY = centerTile.sprite.y
-    const targetCenterTileY = centerY - (targetIndex - 1) * SYMBOL_SIZE
-    this.preStopDistance = targetCenterTileY - currentCenterTileY
-  }
-  
+
   /**
    * Force alignment to grid
    */
@@ -209,11 +177,10 @@ export class Reel {
   destroy(): void {
     // Stop the state machine
     this.stateMachine.stop()
-    
-    this.tiles.forEach((tile) => {
+
+    this.tiles.forEach(tile => {
       tile.destroy()
     })
     this.tiles = []
   }
 }
-

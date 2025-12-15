@@ -31,14 +31,13 @@ export class ScrollingSystem {
     const screenHeight = this.app.screen.height
 
     // Process each tile: move down and check boundary
-    this.tiles.forEach((tile) => {
+    this.tiles.forEach(tile => {
       const sprite = tile.sprite
 
-      // Move tile down with current speed
+      // Move tile down
       sprite.y += speed
 
-      // Check if tile's bottom edge has completely passed the screen bottom
-      // Since anchor is 0.5, bottom edge = sprite.y + SYMBOL_SIZE / 2
+      // Check boundary (using bottom edge)
       const tileBottom = sprite.y + SYMBOL_SIZE / 2
       if (tileBottom > screenHeight) {
         // Find the topmost tile (the one with smallest y value)
@@ -46,11 +45,10 @@ export class ScrollingSystem {
           return current.sprite.y < top.sprite.y ? current : top
         }, this.tiles[0])
 
-        // Move to top (above the topmost tile by exactly SYMBOL_SIZE)
-        // This ensures seamless connection: center-to-center distance = SYMBOL_SIZE
+        // Move to top
         sprite.y = topmostTile.sprite.y - SYMBOL_SIZE
 
-        // Texture Swap: Change to random new texture for seamless infinite scrolling
+        // Update texture
         const newTextureId = this.getRandomTextureId()
         const newTexture = getOriginalTexture(newTextureId) as Texture
         if (newTexture) {
@@ -59,8 +57,7 @@ export class ScrollingSystem {
       }
     })
 
-    // Realign tiles every frame to maintain exact spacing (critical for high speeds)
-    // This prevents gaps from appearing when speed is high
+    // Realign to prevent drift
     this.realignTiles()
   }
 
@@ -88,4 +85,3 @@ export class ScrollingSystem {
     })
   }
 }
-

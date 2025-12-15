@@ -1,12 +1,4 @@
-import {
-  Application,
-  Assets,
-  Sprite,
-  BlurFilter,
-  Cache,
-  Texture,
-  RenderTexture,
-} from 'pixi.js'
+import { Application, Assets, Sprite, BlurFilter, Cache, Texture, RenderTexture } from 'pixi.js'
 
 // Import images
 import symbol1 from '@/assets/images/slot-engine/symbol-1.png'
@@ -25,17 +17,12 @@ export interface PreloadedTextures {
 
 /**
  * Preload all symbol images and create blurred versions
- * @param app - Pixi.js Application instance
- * @returns Promise that resolves when all images are loaded and cached
  */
 export async function preloadSymbolImages(app: Application) {
   const blurFilter = new BlurFilter(8)
 
   async function loadImage(imagePath: string, index: number) {
-    // Load original texture
     const texture = await Assets.load(imagePath)
-
-    // Cache original texture
     Cache.set(`symbol-${index + 1}-original`, texture)
 
     // Create blurred version
@@ -88,4 +75,3 @@ export function clearSymbolCache() {
 
   symbolImages.forEach(removeCache)
 }
-

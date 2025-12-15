@@ -2,12 +2,8 @@ import { setup, assign } from 'xstate'
 
 /**
  * Reel State Machine
- * 
- * The state machine manages the reel's state transitions, not the physical movement.
- * Physical movement (Y coordinate updates) is handled by Pixi Ticker based on current state.
- * 
- * State flow:
- * idle -> accelerating -> spinning -> pre_stop -> decelerating -> bounce -> idle
+ * Manages state transitions (idle -> accelerating -> spinning -> pre_stop -> decelerating -> bounce -> idle)
+ * Physical movement is handled by Pixi Ticker.
  */
 export interface ReelContext {
   targetIndex: number | null // Target symbol index from server
@@ -37,7 +33,6 @@ export const reelMachine = setup({
     },
   },
   actions: {
-    // Record the time when spinning starts
     recordSpinStart: assign({
       spinStartTime: () => Date.now(),
     }),
@@ -69,8 +64,6 @@ export const reelMachine = setup({
       },
     },
     accelerating: {
-      // Acceleration phase: wait for speed to reach maximum
-      // When speed reaches MaxSpeed, Pixi will send 'SPEED_REACHED' event
       on: {
         SPEED_REACHED: {
           target: 'spinning',
@@ -78,8 +71,6 @@ export const reelMachine = setup({
       },
     },
     spinning: {
-      // Spinning phase: wait for server response
-      // Guard will check if minimum spin duration has been met
       on: {
         STOP_COMMAND: {
           target: 'pre_stop',
@@ -89,8 +80,6 @@ export const reelMachine = setup({
       },
     },
     pre_stop: {
-      // Pre-stop phase: calculate remaining distance needed for alignment
-      // After calculation, Pixi will send 'READY_TO_DECEL' event
       on: {
         READY_TO_DECEL: {
           target: 'decelerating',
@@ -98,8 +87,6 @@ export const reelMachine = setup({
       },
     },
     decelerating: {
-      // Deceleration phase: execute deceleration animation
-      // After deceleration completes, Pixi will send 'STOPPED' event
       on: {
         STOPPED: {
           target: 'bounce',
@@ -107,8 +94,6 @@ export const reelMachine = setup({
       },
     },
     bounce: {
-      // Bounce animation phase
-      // After animation completes, Pixi will send 'ANIMATION_DONE' event
       on: {
         ANIMATION_DONE: {
           target: 'idle',
@@ -117,4 +102,3 @@ export const reelMachine = setup({
     },
   },
 })
-
