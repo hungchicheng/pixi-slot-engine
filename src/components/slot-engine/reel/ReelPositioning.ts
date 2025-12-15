@@ -47,11 +47,9 @@ export class ReelPositioning {
   static updateTileXPositions(tiles: ReelTile[], app: Application, column: number): void {
     const x = this.calculateXPosition(app, column)
 
-    function updatePosition(tile: ReelTile) {
+    tiles.forEach((tile) => {
       tile.sprite.x = x
-    }
-
-    tiles.forEach(updatePosition)
+    })
   }
 }
 

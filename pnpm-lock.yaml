@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@xstate/vue':
+        specifier: ^5.0.0
+        version: 5.0.0(vue@3.5.25(typescript@5.9.3))(xstate@5.25.0)
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -20,6 +23,9 @@ importers:
       vue:
         specifier: ^3.4.21
         version: 3.5.25(typescript@5.9.3)
+      xstate:
+        specifier: ^5.25.0
+        version: 5.25.0
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.0.4
@@ -619,6 +625,15 @@ packages:
   '@vue/tsconfig@0.5.1':
     resolution: {integrity: sha512-VcZK7MvpjuTPx2w6blwnwZAu5/LgBUtejFOi3pPGQFXQN5Ela03FUtd2Qtg4yWGGissVL0dr6Ro1LfOFh+PCuQ==}
 
+  '@xstate/vue@5.0.0':
+    resolution: {integrity: sha512-9TyJV4yz5QLJdEU44Ly9LBooEyZmv0nht3qEvDflxXAJmSn1dzaZeESdHFm+ANHtxoUed5jGqH6NT86BusvXQg==}
+    peerDependencies:
+      vue: ^3.0.0
+      xstate: ^5.20.0
+    peerDependenciesMeta:
+      xstate:
+        optional: true
+
   alien-signals@1.0.13:
     resolution: {integrity: sha512-OGj9yyTnJEttvzhTUWuscOvtqxq5vrhF7vL9oS0xJ2mK0ItPYP1/y+vCFebfxoEyAz0++1AIwJ5CMr+Fk3nDmg==}
 
@@ -1156,6 +1171,9 @@ packages:
       typescript:
         optional: true
 
+  xstate@5.25.0:
+    resolution: {integrity: sha512-yyWzfhVRoTHNLjLoMmdwZGagAYfmnzpm9gPjlX2MhJZsDojXGqRxODDOi4BsgGRKD46NZRAdcLp6CKOyvQS0Bw==}
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -1622,6 +1640,12 @@ snapshots:
   '@vue/shared@3.5.25': {}
 
   '@vue/tsconfig@0.5.1': {}
+
+  '@xstate/vue@5.0.0(vue@3.5.25(typescript@5.9.3))(xstate@5.25.0)':
+    dependencies:
+      vue: 3.5.25(typescript@5.9.3)
+    optionalDependencies:
+      xstate: 5.25.0
 
   alien-signals@1.0.13: {}
 
@@ -2175,3 +2199,5 @@ snapshots:
       '@vue/shared': 3.5.25
     optionalDependencies:
       typescript: 5.9.3
+
+  xstate@5.25.0: {}

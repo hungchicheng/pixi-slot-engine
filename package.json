@@ -10,10 +10,12 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,vue,js,jsx,json,css,scss,md}\""
   },
   "dependencies": {
+    "@xstate/vue": "^5.0.0",
     "gsap": "^3.14.2",
     "pinia": "^2.1.7",
     "pixi.js": "^7.3.2",
-    "vue": "^3.4.21"
+    "vue": "^3.4.21",
+    "xstate": "^5.25.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

@@ -15,11 +15,14 @@ export class AnimationLoop {
   start() {
     if (this.animationId !== null) return
 
-    const animate = () => {
+    let lastTime = performance.now()
+    
+    const animate = (currentTime: number) => {
       if (!this.isPaused) {
-        this.reelManager.update()
+        const delta = (currentTime - lastTime) / 16.67 // 标准化到 60fps 的 delta
+        this.reelManager.update(delta)
       }
-
+      lastTime = currentTime
       this.animationId = requestAnimationFrame(animate)
     }
 

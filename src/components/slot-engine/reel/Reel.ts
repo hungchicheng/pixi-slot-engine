@@ -1,26 +1,46 @@
 import { Application, Container, Texture } from 'pixi.js'
+import { createActor } from 'xstate'
 import { ReelTile } from './ReelTile'
 import { SLOT_CONFIG } from '../config/slotConfig'
 import { getOriginalTexture, symbolImages } from '@/utils/preloadAssets'
 import { ReelPositioning } from './ReelPositioning'
 import { ReelStopAnimation } from './ReelStopAnimation'
 import { ReelScrolling } from './ReelScrolling'
+import { reelMachine } from './reelMachine'
 
 export class Reel {
   private app: Application
   private container: Container
   private tiles: ReelTile[] = []
   private column: number
-  private isSpinning: boolean = false
-  private isStopping: boolean = false
   private stopAnimation: ReelStopAnimation | null = null
   private scrolling: ReelScrolling
+  
+  // XState state machine instance (brain)
+  private stateMachine = createActor(reelMachine)
+  
+  // Physical variables (muscle) - not in XState context for high performance
+  private speed: number = 0
+  private readonly MAX_SPEED: number = SLOT_CONFIG.SPIN_SPEED
+  private readonly ACCELERATION: number = 0.5 // Acceleration per frame
+  private readonly DECELERATION_FACTOR: number = 0.95 // Deceleration factor
+  private readonly MIN_SPEED: number = 0.1 // Minimum speed threshold
+  
+  // Pre-stop phase calculation variables
+  private preStopDistance: number = 0
+  private preStopCalculated: boolean = false
+  
+  // Time tracking (for Guard checks)
+  private spinStartTime: number = 0
 
   constructor(app: Application, container: Container, column: number) {
     this.app = app
     this.container = container
     this.column = column
     this.scrolling = new ReelScrolling(app, this.tiles, () => this.getRandomTextureId())
+    
+    // Start the state machine
+    this.stateMachine.start()
   }
 
   initialize(): void {
@@ -69,31 +89,113 @@ export class Reel {
   }
 
   startSpin(): void {
-    this.isSpinning = true
-    this.isStopping = false
-    this.stopAnimation = null
+    // Send START event to state machine (will automatically call recordSpinStart action)
+    this.stateMachine.send({ type: 'START' })
+    this.speed = 0
+    this.preStopCalculated = false
+    this.spinStartTime = Date.now()
   }
 
   stopSpin(resultIndex: number): void {
-    if (!this.isSpinning) return
-
-    this.isStopping = true
-    this.isSpinning = false
-    this.stopAnimation = new ReelStopAnimation(this.app, this.tiles)
-    this.stopAnimation.start(resultIndex)
+    // Send STOP_COMMAND event to state machine
+    // State machine will check Guard (e.g., minimum spin duration) to decide whether to accept
+    this.stateMachine.send({ type: 'STOP_COMMAND', resultIndex })
   }
 
-  update = (): void => {
-    if (this.isStopping && this.stopAnimation) {
-      const isComplete = this.stopAnimation.update()
-      if (isComplete) {
-        this.isStopping = false
-        this.stopAnimation = null
+  update = (delta: number = 1): void => {
+    const currentState = this.stateMachine.getSnapshot()
+    const stateValue = currentState.value as string
+    
+    // Execute corresponding physics logic based on XState state
+    if (stateValue === 'idle') {
+      this.speed = 0
+    } else if (stateValue === 'accelerating') {
+      // Acceleration phase
+      this.speed += this.ACCELERATION * delta
+      if (this.speed >= this.MAX_SPEED) {
+        this.speed = this.MAX_SPEED
+        // Notify state machine: speed has reached maximum
+        this.stateMachine.send({ type: 'SPEED_REACHED' })
       }
-    } else if (this.isSpinning) {
-      this.scrolling.update()
+      // Execute scrolling
+      this.scrolling.updateWithSpeed(this.speed)
+    } else if (stateValue === 'spinning') {
+      // Spinning phase: maintain maximum speed
+      this.speed = this.MAX_SPEED
+      this.scrolling.updateWithSpeed(this.speed)
+      // Note: Spin duration is checked by Guard on STOP_COMMAND event, using Date.now() - context.spinStartTime
+    } else if (stateValue === 'pre_stop') {
+      // Pre-stop phase: calculate distance needed for alignment
+      if (!this.preStopCalculated) {
+        const targetIndex = currentState.context.targetIndex
+        if (targetIndex !== null) {
+          this.calculatePreStopDistance(targetIndex)
+          this.preStopCalculated = true
+          // Notify state machine: calculation complete, can start deceleration
+          this.stateMachine.send({ type: 'READY_TO_DECEL' })
+        }
+      }
+      // Continue scrolling at maximum speed until deceleration starts
+      this.scrolling.updateWithSpeed(this.MAX_SPEED)
+    } else if (stateValue === 'decelerating') {
+      // Deceleration phase
+      this.speed *= this.DECELERATION_FACTOR
+      if (this.speed < this.MIN_SPEED) {
+        this.speed = 0
+        // Force alignment to grid
+        this.snapToGrid()
+        // Notify state machine: stopped
+        this.stateMachine.send({ type: 'STOPPED' })
+      } else {
+        this.scrolling.updateWithSpeed(this.speed)
+      }
+    } else if (stateValue === 'bounce') {
+      // Bounce animation phase
+      if (!this.stopAnimation) {
+        const targetIndex = currentState.context.targetIndex
+        if (targetIndex !== null) {
+          this.stopAnimation = new ReelStopAnimation(this.app, this.tiles)
+          this.stopAnimation.start(targetIndex)
+        }
+      }
+      
+      if (this.stopAnimation) {
+        const isComplete = this.stopAnimation.update()
+        if (isComplete) {
+          this.stopAnimation = null
+          // Notify state machine: animation complete
+          this.stateMachine.send({ type: 'ANIMATION_DONE' })
+        }
+      }
     }
-    // If not spinning and not stopping, do nothing (static display)
+  }
+  
+  /**
+   * Calculate the distance needed to move in pre-stop phase
+   */
+  private calculatePreStopDistance(targetIndex: number): void {
+    const { SYMBOL_SIZE } = SLOT_CONFIG
+    const screenHeight = this.app.screen.height
+    const centerY = screenHeight / 2
+    
+    // Find the tile currently closest to center
+    const centerTile = ReelPositioning.findClosestTileToCenter(this.tiles, centerY)
+    
+    // Calculate target position
+    // targetIndex: 0 = top visible, 1 = middle visible, 2 = bottom visible
+    // We want the result symbol at center (middle visible position)
+    const currentCenterTileY = centerTile.sprite.y
+    const targetCenterTileY = centerY - (targetIndex - 1) * SYMBOL_SIZE
+    this.preStopDistance = targetCenterTileY - currentCenterTileY
+  }
+  
+  /**
+   * Force alignment to grid
+   */
+  private snapToGrid(): void {
+    const screenHeight = this.app.screen.height
+    const centerY = screenHeight / 2
+    ReelPositioning.alignTilesToCenter(this.tiles, centerY)
   }
 
   updatePositions(): void {
@@ -105,6 +207,9 @@ export class Reel {
   }
 
   destroy(): void {
+    // Stop the state machine
+    this.stateMachine.stop()
+    
     this.tiles.forEach((tile) => {
       tile.destroy()
     })

@@ -14,16 +14,28 @@ export class ReelScrolling {
     this.getRandomTextureId = getRandomTextureId
   }
 
+  /**
+   * Update with fixed speed (backward compatible)
+   */
   update(): void {
-    const { SYMBOL_SIZE, SPIN_SPEED } = SLOT_CONFIG
+    const { SPIN_SPEED } = SLOT_CONFIG
+    this.updateWithSpeed(SPIN_SPEED)
+  }
+
+  /**
+   * Update with variable speed (supports acceleration/deceleration)
+   * @param speed Current speed (pixels per frame)
+   */
+  updateWithSpeed(speed: number): void {
+    const { SYMBOL_SIZE } = SLOT_CONFIG
     const screenHeight = this.app.screen.height
 
     // Process each tile: move down and check boundary
     this.tiles.forEach((tile) => {
       const sprite = tile.sprite
 
-      // Move tile down
-      sprite.y += SPIN_SPEED
+      // Move tile down with current speed
+      sprite.y += speed
 
       // Check if tile's bottom edge has completely passed the screen bottom
       // Since anchor is 0.5, bottom edge = sprite.y + SYMBOL_SIZE / 2
@@ -48,7 +60,7 @@ export class ReelScrolling {
     })
 
     // Realign tiles every frame to maintain exact spacing (critical for high speeds)
-    // This prevents gaps from appearing when SPIN_SPEED is high
+    // This prevents gaps from appearing when speed is high
     this.realignTiles()
   }
 

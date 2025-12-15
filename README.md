@@ -7,6 +7,7 @@ A modern project built with Vue 3 + Pinia + Tailwind CSS + Pixi.js.
 - **Vue 3** - Progressive JavaScript framework
 - **TypeScript** - Type-safe JavaScript superset
 - **Pinia** - Vue state management library
+- **XState** - State machine library for complex state management
 - **Tailwind CSS** - Utility-first CSS framework
 - **Pixi.js** - High-performance 2D WebGL rendering engine
 - **Vite** - Next-generation frontend build tool
@@ -67,7 +68,8 @@ slotEngine/
 │   │   │   ├── reel/    # Reel system
 │   │   │   │   ├── Reel.ts
 │   │   │   │   ├── ReelTile.ts
-│   │   │   │   └── ReelManager.ts
+│   │   │   │   ├── ReelManager.ts
+│   │   │   │   └── reelMachine.ts  # XState state machine
 │   │   │   ├── animation/  # Animation system
 │   │   │   │   └── AnimationLoop.ts
 │   │   │   ├── types/   # Type definitions
@@ -105,6 +107,8 @@ slotEngine/
 - ✅ Prettier code formatting
 - ✅ Seamless infinite scrolling slot machine
 - ✅ Object pooling for optimal performance
+- ✅ XState state machine for robust state management
+- ✅ Accelerating, spinning, and decelerating animations
 
 ## Architecture
 
@@ -163,6 +167,87 @@ Assuming window height is 300px (each tile is 100px):
 - **Smooth Animation**: No gaps or visual glitches even at high speeds
 - **Flexible**: Allows for bounce effects (Back.out easing) and other animations
 - **Scalable**: Easy to adjust speed without performance degradation
+
+### XState State Machine
+
+The slot engine uses **XState** to manage complex state transitions, ensuring robust and maintainable state management. The state machine acts as the "brain" that controls state flow, while Pixi.js handles the physical rendering (the "muscle").
+
+#### Architecture Principle: Brain vs Muscle Separation
+
+- **XState (Brain)**: Manages state transitions and commands
+- **Pixi.js Ticker (Muscle)**: Executes physical movement (Y coordinate updates)
+- **Physical Variables**: Speed and position are kept in the class, NOT in XState context for high performance
+
+This separation ensures:
+- **High Performance**: No reactivity overhead from state changes affecting 60fps rendering
+- **Maintainability**: State logic is clearly defined and easy to modify
+- **Debuggability**: State transitions can be visualized and tracked
+
+#### State Flow
+
+```
+idle → accelerating → spinning → pre_stop → decelerating → bounce → idle
+```
+
+#### State Descriptions
+
+| State | Description | Trigger | Next State |
+|-------|-------------|---------|------------|
+| **idle** | Initial state, reel is stationary | `START` event | `accelerating` |
+| **accelerating** | Reel is speeding up | `SPEED_REACHED` event (when max speed reached) | `spinning` |
+| **spinning** | Reel is spinning at maximum speed, waiting for server response | `STOP_COMMAND` event (with Guard check) | `pre_stop` |
+| **pre_stop** | Calculating distance needed for alignment | `READY_TO_DECEL` event | `decelerating` |
+| **decelerating** | Reel is slowing down | `STOPPED` event (when speed < threshold) | `bounce` |
+| **bounce** | Final bounce animation | `ANIMATION_DONE` event | `idle` |
+
+#### Events
+
+| Event | Description | Sent By |
+|-------|-------------|---------|
+| `START` | Begin spinning | User action / `startSpin()` |
+| `SPEED_REACHED` | Speed has reached maximum | Pixi ticker (when `speed >= MAX_SPEED`) |
+| `STOP_COMMAND` | Request to stop with target index | Server response / `stopSpin(resultIndex)` |
+| `READY_TO_DECEL` | Pre-stop calculation complete | Pixi ticker (after distance calculation) |
+| `STOPPED` | Deceleration complete, reel stopped | Pixi ticker (when `speed < MIN_SPEED`) |
+| `ANIMATION_DONE` | Bounce animation complete | Pixi ticker (after animation finishes) |
+
+#### Guards
+
+- **`hasSpunMinDuration`**: Ensures the reel has spun for at least the minimum duration (default: 2000ms) before allowing stop. This prevents the reel from stopping too quickly and provides a better user experience.
+
+#### Context
+
+The state machine context stores:
+
+```typescript
+{
+  targetIndex: number | null,      // Target symbol index from server
+  spinStartTime: number,           // Timestamp when spinning started
+  minSpinDuration: number         // Minimum spin duration (2000ms default)
+}
+```
+
+#### Usage Example
+
+```typescript
+// Start spinning
+reel.startSpin()  // Sends START event
+
+// Stop spinning (state machine checks Guard before accepting)
+reel.stopSpin(resultIndex)  // Sends STOP_COMMAND event
+
+// The update loop automatically handles state transitions
+// Physical variables (speed, position) are updated in the ticker
+// based on the current state
+```
+
+#### Benefits of XState Integration
+
+1. **Decoupling**: Change game logic by modifying state machine config, without touching Pixi rendering code
+2. **Visualization**: Use XState Visualizer to debug state transitions
+3. **Async Handling**: Guards ensure proper timing (e.g., minimum spin duration)
+4. **Extensibility**: Easy to add new states (e.g., Free Game mode, Bonus rounds)
+5. **Type Safety**: Full TypeScript support for states, events, and context
 
 ## Development Guide
 

@@ -21,9 +21,9 @@ export class ReelManager {
     }
   }
 
-  update = () => {
+  update = (delta: number = 1) => {
     this.reels.forEach((reel) => {
-      reel.update()
+      reel.update(delta)
     })
   }
 
