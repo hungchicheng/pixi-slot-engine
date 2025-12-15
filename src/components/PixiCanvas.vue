@@ -33,7 +33,7 @@ defineExpose({
   stopSpin,
 })
 
-async function handleMounted() {
+const handleMounted = async () => {
   if (!canvasRef.value) return
 
   // Create Pixi.js application
@@ -60,11 +60,11 @@ async function handleMounted() {
   await slotEngine.initialize()
 
   // Watch game status for pause/resume
-  function getStatus() {
+  const getStatus = () => {
     return gameStore.status
   }
 
-  function handleStatusChange(status: 'Running' | 'Paused') {
+  const handleStatusChange = (status: 'Running' | 'Paused') => {
     if (slotEngine) {
       if (status === 'Paused') {
         slotEngine.pause()
@@ -77,7 +77,7 @@ async function handleMounted() {
   watch(getStatus, handleStatusChange)
 
   // Handle window resize
-  function handleResize() {
+  const handleResize = () => {
     if (app && canvasRef.value && slotEngine) {
       app.renderer.resize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)
       slotEngine.handleResize()
@@ -89,7 +89,7 @@ async function handleMounted() {
 
 onMounted(handleMounted)
 
-function handleUnmounted() {
+const handleUnmounted = () => {
   if (slotEngine) {
     slotEngine.destroy()
     slotEngine = null

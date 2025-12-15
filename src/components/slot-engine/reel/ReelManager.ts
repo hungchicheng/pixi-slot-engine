@@ -21,20 +21,16 @@ export class ReelManager {
     }
   }
 
-  update() {
-    function updateReel(reel: Reel) {
+  update = () => {
+    this.reels.forEach((reel) => {
       reel.update()
-    }
-
-    this.reels.forEach(updateReel)
+    })
   }
 
   startSpin() {
-    function startReelSpin(reel: Reel) {
+    this.reels.forEach((reel) => {
       reel.startSpin()
-    }
-
-    this.reels.forEach(startReelSpin)
+    })
   }
 
   stopSpin(resultIndices: number[]) {
@@ -45,27 +41,21 @@ export class ReelManager {
       return
     }
 
-    function stopReelSpin(reel: Reel, index: number) {
+    this.reels.forEach((reel, index) => {
       reel.stopSpin(resultIndices[index])
-    }
-
-    this.reels.forEach(stopReelSpin)
+    })
   }
 
   updatePositions() {
-    function updatePosition(reel: Reel) {
+    this.reels.forEach((reel) => {
       reel.updatePositions()
-    }
-
-    this.reels.forEach(updatePosition)
+    })
   }
 
   destroy() {
-    function destroyReel(reel: Reel) {
+    this.reels.forEach((reel) => {
       reel.destroy()
-    }
-
-    this.reels.forEach(destroyReel)
+    })
     this.reels = []
   }
 }

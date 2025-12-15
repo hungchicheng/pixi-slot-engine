@@ -15,14 +15,12 @@ export class AnimationLoop {
   start() {
     if (this.animationId !== null) return
 
-    const self = this
-
-    function animate() {
-      if (!self.isPaused) {
-        self.reelManager.update()
+    const animate = () => {
+      if (!this.isPaused) {
+        this.reelManager.update()
       }
 
-      self.animationId = requestAnimationFrame(animate)
+      this.animationId = requestAnimationFrame(animate)
     }
 
     animate()

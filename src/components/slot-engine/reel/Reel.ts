@@ -83,7 +83,7 @@ export class Reel {
     this.stopAnimation.start(resultIndex)
   }
 
-  update(): void {
+  update = (): void => {
     if (this.isStopping && this.stopAnimation) {
       const isComplete = this.stopAnimation.update()
       if (isComplete) {
@@ -105,11 +105,9 @@ export class Reel {
   }
 
   destroy(): void {
-    function destroyTile(tile: ReelTile) {
+    this.tiles.forEach((tile) => {
       tile.destroy()
-    }
-
-    this.tiles.forEach(destroyTile)
+    })
     this.tiles = []
   }
 }

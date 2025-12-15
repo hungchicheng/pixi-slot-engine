@@ -45,7 +45,7 @@ export class ReelStopAnimation {
     this.ensureResultTexture(resultIndex)
   }
 
-  update(): boolean {
+  update = (): boolean => {
     const { STOP_DURATION } = SLOT_CONFIG
     const elapsed = Date.now() - this.stopStartTime
     const progress = Math.min(elapsed / STOP_DURATION, 1)
@@ -55,14 +55,12 @@ export class ReelStopAnimation {
     const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * easedProgress
 
     // Move all tiles from their initial positions
-    function moveTile(tile: ReelTile) {
+    this.tiles.forEach((tile) => {
       const initialY = (tile as any).initialY
       if (initialY !== undefined) {
         tile.sprite.y = initialY + currentOffset
       }
-    }
-
-    this.tiles.forEach(moveTile)
+    })
 
     // Return true if animation is complete
     if (progress >= 1) {
@@ -86,15 +84,13 @@ export class ReelStopAnimation {
     let targetTile = this.tiles[0]
     let minDistance = Math.abs(this.tiles[0].sprite.y - targetY)
 
-    function findTarget(tile: ReelTile) {
+    this.tiles.forEach((tile) => {
       const distance = Math.abs(tile.sprite.y - targetY)
       if (distance < minDistance) {
         minDistance = distance
         targetTile = tile
       }
-    }
-
-    this.tiles.forEach(findTarget)
+    })
 
     // Set the result texture
     const texture = getOriginalTexture(resultIndex) as Texture

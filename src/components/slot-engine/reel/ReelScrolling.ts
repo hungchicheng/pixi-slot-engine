@@ -17,10 +17,9 @@ export class ReelScrolling {
   update(): void {
     const { SYMBOL_SIZE, SPIN_SPEED } = SLOT_CONFIG
     const screenHeight = this.app.screen.height
-    const self = this
 
     // Process each tile: move down and check boundary
-    function updateTile(tile: ReelTile) {
+    this.tiles.forEach((tile) => {
       const sprite = tile.sprite
 
       // Move tile down
@@ -31,26 +30,22 @@ export class ReelScrolling {
       const tileBottom = sprite.y + SYMBOL_SIZE / 2
       if (tileBottom > screenHeight) {
         // Find the topmost tile (the one with smallest y value)
-        function findTopmost(top: ReelTile, current: ReelTile) {
+        const topmostTile = this.tiles.reduce((top, current) => {
           return current.sprite.y < top.sprite.y ? current : top
-        }
-
-        const topmostTile = self.tiles.reduce(findTopmost, self.tiles[0])
+        }, this.tiles[0])
 
         // Move to top (above the topmost tile by exactly SYMBOL_SIZE)
         // This ensures seamless connection: center-to-center distance = SYMBOL_SIZE
         sprite.y = topmostTile.sprite.y - SYMBOL_SIZE
 
         // Texture Swap: Change to random new texture for seamless infinite scrolling
-        const newTextureId = self.getRandomTextureId()
+        const newTextureId = this.getRandomTextureId()
         const newTexture = getOriginalTexture(newTextureId) as Texture
         if (newTexture) {
           tile.updateTexture(newTexture, newTextureId)
         }
       }
-    }
-
-    this.tiles.forEach(updateTile)
+    })
 
     // Realign tiles every frame to maintain exact spacing (critical for high speeds)
     // This prevents gaps from appearing when SPIN_SPEED is high
