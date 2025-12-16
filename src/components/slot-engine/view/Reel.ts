@@ -28,6 +28,7 @@ export class Reel {
 
   // Pre-stop phase calculation variables
   private preStopCalculated: boolean = false
+  private stopOvershoot: number = 0
 
   constructor(app: Application, container: Container, column: number) {
     this.app = app
@@ -110,19 +111,26 @@ export class Reel {
     } else if (stateValue === 'spinning') {
       // Spinning phase: maintain maximum speed
       this.speed = this.MAX_SPEED
+      this.speed = this.MAX_SPEED
       this.scrolling.updateWithSpeed(this.speed)
       // Note: Spin duration is checked by Guard on STOP_COMMAND event, using Date.now() - context.spinStartTime
     } else if (stateValue === 'pre_stop') {
-      // Pre-stop phase: position to target location and prepare to stop
+      // Pre-stop phase: Spin to target symbol
       if (!this.preStopCalculated) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
-          // Position to target location immediately
-          this.positionToTarget(targetIndex)
+          // Tell scrolling system to prepare to stop at this index
+          this.scrolling.setTargetIndex(targetIndex)
           this.preStopCalculated = true
-          // Notify state machine: positioned, ready to stop
-          this.stateMachine.send({ type: 'READY_TO_STOP' })
         }
+      }
+
+      // Continue spinning until target arrives and passes center
+      const overshoot = this.scrolling.updateWithSpeed(this.MAX_SPEED)
+
+      if (overshoot !== null) {
+        this.stopOvershoot = overshoot
+        this.stateMachine.send({ type: 'READY_TO_STOP' })
       }
     } else if (stateValue === 'decelerating') {
       // Deceleration phase (deprecated: no longer used, pre_stop now goes directly to bounce)
@@ -130,7 +138,7 @@ export class Reel {
       if (this.speed < this.MIN_SPEED) {
         this.speed = 0
         // Force alignment to grid
-        this.snapToGrid()
+        // this.snapToGrid()
         this.stateMachine.send({ type: 'STOPPED' })
       } else {
         this.scrolling.updateWithSpeed(this.speed)
@@ -141,7 +149,7 @@ export class Reel {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
           this.stopAnimation = new AnimationSystem(this.app, this.tiles)
-          this.stopAnimation.start(targetIndex)
+          this.stopAnimation.start(this.stopOvershoot)
         }
       }
 
@@ -154,36 +162,6 @@ export class Reel {
         }
       }
     }
-  }
-
-  /**
-   * Force alignment to grid
-   */
-  private snapToGrid(): void {
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
-  }
-
-  /**
-   * Position to target location and ensure target texture is at center
-   */
-  private positionToTarget(targetIndex: number): void {
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-
-    // Align tiles to exact positions
-    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
-
-    // Ensure target texture is at center
-    const targetTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
-    const texture = getOriginalTexture(targetIndex) as Texture
-    if (texture) {
-      targetTile.updateTexture(texture, targetIndex)
-    }
-
-    // Stop scrolling
-    this.speed = 0
   }
 
   updatePositions(): void {

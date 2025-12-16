@@ -1,7 +1,6 @@
-import { Application, Texture } from 'pixi.js'
+import { Application } from 'pixi.js'
 import type { Tile } from '../view/Tile'
 import { SLOT_CONFIG } from '../logic/config'
-import { getOriginalTexture } from '@/utils/preloadAssets'
 import { LayoutSystem } from './layout'
 
 export class AnimationSystem {
@@ -16,49 +15,34 @@ export class AnimationSystem {
     this.tiles = tiles
   }
 
-  start(resultIndex: number): void {
-    const { SYMBOL_SIZE } = SLOT_CONFIG
+  start(startOffset: number = 0): void {
+    const IMPACT_POINT = 70
 
-    // Start slightly above for landing effect
-    const BOUNCE_HEIGHT = -SYMBOL_SIZE * 0.5
-
-    this.stopStartY = BOUNCE_HEIGHT
-    this.stopTargetY = 0
+    this.stopStartY = startOffset
+    this.stopTargetY = IMPACT_POINT
     this.stopStartTime = Date.now()
 
-    // Store initial tile positions
     this.tiles.forEach(tile => {
       ;(tile as any).initialY = tile.sprite.y
     })
-
-    // Ensure we have the correct texture at the center
-    this.ensureResultTexture(resultIndex)
   }
 
   update = (): boolean => {
-    const { STOP_DURATION } = SLOT_CONFIG
+    const { IMPACT_DURATION, RECOVER_DURATION } = SLOT_CONFIG
     const elapsed = Date.now() - this.stopStartTime
-    const progress = Math.min(elapsed / STOP_DURATION, 1)
 
-    // Back Out Easing
-    const c1 = 1.70158
-    const c3 = c1 + 1
-    const x = progress
-    const easedProgress = 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2)
-
-    // Calculate current offset with easing
-    const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * easedProgress
-
-    // Move all tiles from their initial positions
-    this.tiles.forEach(tile => {
-      const initialY = (tile as any).initialY
-      if (initialY !== undefined) {
-        tile.sprite.y = initialY + currentOffset
-      }
-    })
-
-    // Return true if animation is complete
-    if (progress >= 1) {
+    if (elapsed <= IMPACT_DURATION) {
+      const progress = elapsed / IMPACT_DURATION
+      const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * progress
+      this.applyOffset(currentOffset)
+    }
+    else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
+      const recoverElapsed = elapsed - IMPACT_DURATION
+      const progress = recoverElapsed / RECOVER_DURATION
+      const currentOffset = this.stopTargetY * (1 - progress)
+      this.applyOffset(currentOffset)
+    }
+    else {
       this.finalize()
       return true
     }
@@ -66,27 +50,21 @@ export class AnimationSystem {
     return false
   }
 
-  private ensureResultTexture(resultIndex: number): void {
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-
-    // Find center tile and update texture
-    const targetTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
-
-    const texture = getOriginalTexture(resultIndex) as Texture
-    if (texture) {
-      targetTile.updateTexture(texture, resultIndex)
-    }
+  private applyOffset(offset: number): void {
+    this.tiles.forEach(tile => {
+      const initialY = (tile as any).initialY
+      if (initialY !== undefined) {
+        tile.sprite.y = initialY - this.stopStartY + offset
+      }
+    })
   }
 
   private finalize(): void {
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 
-    // Align tiles to exact positions
     LayoutSystem.alignTilesToCenter(this.tiles, centerY)
 
-    // Clean up temporary properties
     this.tiles.forEach(tile => {
       delete (tile as any).initialY
     })
