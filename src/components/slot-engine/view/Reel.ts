@@ -174,6 +174,10 @@ export class Reel {
     return Math.floor(Math.random() * symbolImages.length)
   }
 
+  getState(): string {
+    return this.stateMachine.getSnapshot().value as string
+  }
+
   destroy(): void {
     // Stop the state machine
     this.stateMachine.stop()

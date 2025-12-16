@@ -44,6 +44,10 @@ export class SlotEngine {
     this.slotStage.stopSpin(resultIndices)
   }
 
+  getStates(): string[] {
+    return this.slotStage.getStates()
+  }
+
   destroy() {
     this.gameLoop.stop()
     this.slotStage.destroy()

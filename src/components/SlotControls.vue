@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, computed } from 'vue'
 import { useGameStore } from '../stores/game'
 import type PixiCanvas from './PixiCanvas.vue'
 
 const gameStore = useGameStore()
 const pixiCanvasRef = inject<{ value: InstanceType<typeof PixiCanvas> | null }>('pixiCanvasRef')
+
+const reelStates = computed(() => {
+  return pixiCanvasRef?.value?.reelStates || ['idle', 'idle', 'idle']
+})
+
+const statesDisplay = computed(() => {
+  return reelStates.value.join(' | ')
+})
 
 function handleStartSpin() {
   if (pixiCanvasRef?.value) {
@@ -22,7 +30,10 @@ function handleStopSpin() {
 <template>
   <div class="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700 p-4">
     <div class="text-center text-gray-400 text-sm">
-      <p>Status: {{ gameStore.status }}</p>
+      <p>Game Status: {{ gameStore.status }}</p>
+      <p class="mt-2 text-yellow-400 font-mono text-xs">
+        XState: {{ statesDisplay }}
+      </p>
       <div class="mt-4 flex gap-4 justify-center">
         <button
           @click="handleStartSpin"

@@ -9,6 +9,8 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
 let app: Application | null = null
 let slotEngine: SlotEngine | null = null
+const reelStates = ref<string[]>(['idle', 'idle', 'idle'])
+let stateInterval: ReturnType<typeof setInterval> | null = null
 
 
 function startSpin() {
@@ -26,12 +28,6 @@ function stopSpin() {
     slotEngine.stopSpin(resultIndices)
   }
 }
-
-
-defineExpose({
-  startSpin,
-  stopSpin,
-})
 
 const handleMounted = async () => {
   if (!canvasRef.value) return
@@ -58,6 +54,16 @@ const handleMounted = async () => {
   // Initialize slot engine
   slotEngine = new SlotEngine(app)
   await slotEngine.initialize()
+
+  // Update reel states periodically
+  const updateStates = () => {
+    if (slotEngine) {
+      reelStates.value = slotEngine.getStates()
+    }
+  }
+
+  // Update states every 100ms
+  stateInterval = setInterval(updateStates, 100)
 
   // Game status watcher
   const getStatus = () => {
@@ -90,6 +96,12 @@ const handleMounted = async () => {
 onMounted(handleMounted)
 
 const handleUnmounted = () => {
+  // Clear state update interval
+  if (stateInterval) {
+    clearInterval(stateInterval)
+    stateInterval = null
+  }
+  
   if (slotEngine) {
     slotEngine.destroy()
     slotEngine = null
@@ -101,6 +113,13 @@ const handleUnmounted = () => {
     app = null
   }
 }
+
+// Expose methods and states for parent component
+defineExpose({
+  startSpin,
+  stopSpin,
+  reelStates,
+})
 
 onUnmounted(handleUnmounted)
 </script>
