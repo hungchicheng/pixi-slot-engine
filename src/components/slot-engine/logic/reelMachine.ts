@@ -2,7 +2,7 @@ import { setup, assign } from 'xstate'
 
 /**
  * Reel State Machine
- * Manages state transitions (idle -> accelerating -> spinning -> pre_stop -> decelerating -> bounce -> idle)
+ * Manages state transitions (idle -> accelerating -> spinning -> pre_stop -> bounce -> idle)
  * Physical movement is handled by Pixi Ticker.
  */
 export interface ReelContext {
@@ -15,7 +15,7 @@ export type ReelEvent =
   | { type: 'START' }
   | { type: 'SPEED_REACHED' }
   | { type: 'STOP_COMMAND'; resultIndex: number }
-  | { type: 'READY_TO_DECEL' }
+  | { type: 'READY_TO_STOP' }
   | { type: 'STOPPED' }
   | { type: 'ANIMATION_DONE' }
 
@@ -81,8 +81,8 @@ export const reelMachine = setup({
     },
     pre_stop: {
       on: {
-        READY_TO_DECEL: {
-          target: 'decelerating',
+        READY_TO_STOP: {
+          target: 'bounce',
         },
       },
     },

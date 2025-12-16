@@ -73,7 +73,7 @@ slotEngine/
 │   │   │   ├── systems/ # Behavior systems
 │   │   │   │   ├── scrolling.ts     # Y-axis movement & tile reuse logic
 │   │   │   │   ├── layout.ts        # Initial position calculations
-│   │   │   │   └── animation.ts     # Bounce & deceleration formulas
+│   │   │   │   └── animation.ts     # Bounce animation formulas
 │   │   │   ├── view/    # Muscle (View layer - Pixi components)
 │   │   │   │   ├── SlotStage.ts     # Main slot stage (manages 3 reels)
 │   │   │   │   ├── Reel.ts          # Single reel container
@@ -121,7 +121,7 @@ The slot engine follows a clear separation of concerns:
 - ✅ Seamless infinite scrolling slot machine
 - ✅ Object pooling for optimal performance
 - ✅ XState state machine for robust state management
-- ✅ Accelerating, spinning, and decelerating animations
+- ✅ Accelerating, spinning, and bounce animations
 
 ## Architecture
 
@@ -213,7 +213,7 @@ This separation ensures:
 #### State Flow
 
 ```
-idle → accelerating → spinning → pre_stop → decelerating → bounce → idle
+idle → accelerating → spinning → pre_stop → bounce → idle
 ```
 
 #### State Descriptions
@@ -223,8 +223,8 @@ idle → accelerating → spinning → pre_stop → decelerating → bounce → 
 | **idle** | Initial state, reel is stationary | `START` event | `accelerating` |
 | **accelerating** | Reel is speeding up | `SPEED_REACHED` event (when max speed reached) | `spinning` |
 | **spinning** | Reel is spinning at maximum speed, waiting for server response | `STOP_COMMAND` event (with Guard check) | `pre_stop` |
-| **pre_stop** | Calculating distance needed for alignment | `READY_TO_DECEL` event | `decelerating` |
-| **decelerating** | Reel is slowing down | `STOPPED` event (when speed < threshold) | `bounce` |
+| **pre_stop** | Positioning to target location | `READY_TO_STOP` event | `bounce` |
+| **decelerating** | (Deprecated) Reel is slowing down - no longer used, pre_stop goes directly to bounce | `STOPPED` event (when speed < threshold) | `bounce` |
 | **bounce** | Final bounce animation | `ANIMATION_DONE` event | `idle` |
 
 #### Events
@@ -234,8 +234,8 @@ idle → accelerating → spinning → pre_stop → decelerating → bounce → 
 | `START` | Begin spinning | User action / `startSpin()` |
 | `SPEED_REACHED` | Speed has reached maximum | Pixi ticker (when `speed >= MAX_SPEED`) |
 | `STOP_COMMAND` | Request to stop with target index | Server response / `stopSpin(resultIndex)` |
-| `READY_TO_DECEL` | Pre-stop calculation complete | Pixi ticker (after distance calculation) |
-| `STOPPED` | Deceleration complete, reel stopped | Pixi ticker (when `speed < MIN_SPEED`) |
+| `READY_TO_STOP` | Positioned to target location, ready to stop | Pixi ticker (after positioning to target) |
+| `STOPPED` | (Deprecated) Deceleration complete, reel stopped - no longer used | Pixi ticker (when `speed < MIN_SPEED`) |
 | `ANIMATION_DONE` | Bounce animation complete | Pixi ticker (after animation finishes) |
 
 #### Guards

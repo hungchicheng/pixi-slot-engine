@@ -113,20 +113,19 @@ export class Reel {
       this.scrolling.updateWithSpeed(this.speed)
       // Note: Spin duration is checked by Guard on STOP_COMMAND event, using Date.now() - context.spinStartTime
     } else if (stateValue === 'pre_stop') {
-      // Pre-stop phase: calculate distance needed for alignment
+      // Pre-stop phase: position to target location and prepare to stop
       if (!this.preStopCalculated) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
-          // this.calculatePreStopDistance(targetIndex)
+          // Position to target location immediately
+          this.positionToTarget(targetIndex)
           this.preStopCalculated = true
-          // Notify state machine: calculation complete, can start deceleration
-          this.stateMachine.send({ type: 'READY_TO_DECEL' })
+          // Notify state machine: positioned, ready to stop
+          this.stateMachine.send({ type: 'READY_TO_STOP' })
         }
       }
-      // Continue scrolling at maximum speed until deceleration starts
-      this.scrolling.updateWithSpeed(this.MAX_SPEED)
     } else if (stateValue === 'decelerating') {
-      // Deceleration phase
+      // Deceleration phase (deprecated: no longer used, pre_stop now goes directly to bounce)
       this.speed *= this.DECELERATION_FACTOR
       if (this.speed < this.MIN_SPEED) {
         this.speed = 0
@@ -164,6 +163,27 @@ export class Reel {
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
     LayoutSystem.alignTilesToCenter(this.tiles, centerY)
+  }
+
+  /**
+   * Position to target location and ensure target texture is at center
+   */
+  private positionToTarget(targetIndex: number): void {
+    const screenHeight = this.app.screen.height
+    const centerY = screenHeight / 2
+
+    // Align tiles to exact positions
+    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
+
+    // Ensure target texture is at center
+    const targetTile = LayoutSystem.findClosestTileToCenter(this.tiles, centerY)
+    const texture = getOriginalTexture(targetIndex) as Texture
+    if (texture) {
+      targetTile.updateTexture(texture, targetIndex)
+    }
+
+    // Stop scrolling
+    this.speed = 0
   }
 
   updatePositions(): void {
