@@ -132,17 +132,6 @@ export class Reel {
         this.stopOvershoot = overshoot
         this.stateMachine.send({ type: 'READY_TO_STOP' })
       }
-    } else if (stateValue === 'decelerating') {
-      // Deceleration phase (deprecated: no longer used, pre_stop now goes directly to bounce)
-      this.speed *= this.DECELERATION_FACTOR
-      if (this.speed < this.MIN_SPEED) {
-        this.speed = 0
-        // Force alignment to grid
-        // this.snapToGrid()
-        this.stateMachine.send({ type: 'STOPPED' })
-      } else {
-        this.scrolling.updateWithSpeed(this.speed)
-      }
     } else if (stateValue === 'bounce') {
       // Bounce animation phase
       if (!this.stopAnimation) {

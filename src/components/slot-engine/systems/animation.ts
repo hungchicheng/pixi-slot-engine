@@ -1,6 +1,6 @@
 import { Application } from 'pixi.js'
+import { Back } from 'gsap'
 import type { Tile } from '../view/Tile'
-import { SLOT_CONFIG } from '../logic/config'
 import { LayoutSystem } from './layout'
 
 export class AnimationSystem {
@@ -28,18 +28,23 @@ export class AnimationSystem {
   }
 
   update = (): boolean => {
-    const { IMPACT_DURATION, RECOVER_DURATION } = SLOT_CONFIG
+    const IMPACT_DURATION = 200 // Impact phase duration (ms)
+    const RECOVER_DURATION = 400 // Recovery phase duration (ms)
     const elapsed = Date.now() - this.stopStartTime
 
     if (elapsed <= IMPACT_DURATION) {
+      // Impact phase: linear movement to target position
       const progress = elapsed / IMPACT_DURATION
       const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * progress
       this.applyOffset(currentOffset)
     }
     else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
+      // Recovery phase: use Back.out easing for bounce effect
       const recoverElapsed = elapsed - IMPACT_DURATION
       const progress = recoverElapsed / RECOVER_DURATION
-      const currentOffset = this.stopTargetY * (1 - progress)
+      // Use Back.out easing function, overshoot parameter controls bounce intensity (default 1.7)
+      const easedProgress = Back.easeOut.config(1.7)(progress)
+      const currentOffset = this.stopTargetY * (1 - easedProgress)
       this.applyOffset(currentOffset)
     }
     else {
