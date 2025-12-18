@@ -34,7 +34,6 @@ const groups = {
     class="fixed top-4 right-4 max-h-[90vh] overflow-y-auto bg-gray-900/90 backdrop-blur-md border border-gray-700 rounded-lg shadow-xl text-white transition-all duration-300 z-50 w-80"
     :class="{ 'translate-x-full opacity-50': !isOpen }"
   >
-    <!-- Toggle Button -->
     <button 
       @click="isOpen = !isOpen"
       class="absolute left-0 top-0 -translate-x-full bg-gray-800 p-2 rounded-l-lg border-y border-l border-gray-700 hover:bg-gray-700 transition-colors"

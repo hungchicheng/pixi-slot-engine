@@ -53,54 +53,57 @@ export class ScrollingSystem {
     const centerY = screenHeight / 2
 
     let overshoot: number | null = null
-    const boundaryY = screenHeight + SYMBOL_SIZE // Allow one full symbol below screen before recycling
 
     // Move all tiles down
-    // Since we maintain 'tiles' array in physical order (Top -> Bottom),
-    // we only need to iterate normally.
     for (let i = 0; i < this.tiles.length; i++) {
       this.tiles[i].sprite.y += speed
     }
 
-    // Check the last tile (bottom-most)
-    const bottomTile = this.tiles[this.tiles.length - 1]
+    // Recycle tiles that moved off-screen
+    const halfTiles = Math.floor(this.config.TILES_PER_COLUMN / 2)
+    const unitSize = SYMBOL_SIZE + this.config.SPACING
 
-    // If bottom tile goes out of bounds
-    if (bottomTile.sprite.y > boundaryY) {
-      // 1. Remove from bottom
-      const recycledTile = this.tiles.pop()!
+    // limitY: slightly below the bottom-most resting position
+    const limitY = centerY + halfTiles * unitSize + SYMBOL_SIZE / 2
 
-      // 2. Determine new Y position: precisely one SYMBOL_SIZE above the current top tile
-      const currentTopTile = this.tiles[0]
-      recycledTile.sprite.y = currentTopTile.sprite.y - SYMBOL_SIZE
+    for (let i = this.tiles.length - 1; i >= 0; i--) {
+      if (this.tiles[i].sprite.y > limitY) {
+        const tile = this.tiles.splice(i, 1)[0]
 
-      // 3. Determine new texture
-      let newTextureId: number
+        // Find top-most tile position
+        let minY = Infinity
+        this.tiles.forEach(t => (minY = Math.min(minY, t.sprite.y)))
 
-      if (this.targetIndex !== null) {
-        if (this.tilesToStop > 0) {
-          this.tilesToStop--
-          newTextureId = this.getRandomTextureId()
-        } else if (this.tilesToStop === 0) {
-          // Target!
-          newTextureId = this.targetIndex
-          ;(recycledTile as any).isTarget = true
-          this.tilesToStop = -1
+        // Place new tile above the top-most one
+        tile.sprite.y = minY - SYMBOL_SIZE - this.config.SPACING
+
+        // Determine texture
+        let textureId: number
+
+        if (this.targetIndex !== null) {
+          if (this.tilesToStop > 0) {
+            this.tilesToStop--
+            textureId = this.getRandomTextureId()
+          } else if (this.tilesToStop === 0) {
+            // Target!
+            textureId = this.targetIndex
+            ;(tile as any).isTarget = true
+            this.tilesToStop = -1
+          } else {
+            textureId = this.getRandomTextureId()
+          }
         } else {
-          newTextureId = this.getRandomTextureId()
+          textureId = this.getRandomTextureId()
         }
-      } else {
-        newTextureId = this.getRandomTextureId()
-      }
 
-      // Update texture
-      const newTexture = getOriginalTexture(newTextureId) as Texture
-      if (newTexture) {
-        recycledTile.updateTexture(newTexture, newTextureId)
-      }
+        // Update texture
+        const newTexture = getOriginalTexture(textureId) as Texture
+        if (newTexture) {
+          tile.updateTexture(newTexture, textureId)
+        }
 
-      // 4. Add to top
-      this.tiles.unshift(recycledTile)
+        this.tiles.unshift(tile)
+      }
     }
 
     // Check stop condition

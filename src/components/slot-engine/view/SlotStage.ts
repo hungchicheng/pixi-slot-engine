@@ -29,7 +29,6 @@ export class SlotStage {
   }
 
   initialize() {
-    // Create a reel for each column
     for (let col = 0; col < this.config.COLUMNS; col++) {
       const reel = new Reel(this.app, this.container, col, this.config)
       reel.initialize()
@@ -42,25 +41,20 @@ export class SlotStage {
       reel.update(delta)
     })
 
-    // Check if we need to stop the next reel in sequence
+    // Sequential stopping logic
     if (this.currentStopIndex >= 0 && this.currentStopIndex < this.reels.length) {
       const currentReel = this.reels[this.currentStopIndex]
       const currentState = currentReel.getState()
 
-      // If current reel has finished stopping (returned to idle), stop the next one
-      // Only check if the reel was in a stopping state before (not already idle from start)
       if (currentState === 'idle') {
-        // Move to next reel
         this.currentStopIndex++
 
         if (
           this.currentStopIndex < this.reels.length &&
           this.currentStopIndex < this.resultIndices.length
         ) {
-          // Stop the next reel
           this.reels[this.currentStopIndex].stopSpin(this.resultIndices[this.currentStopIndex])
         } else {
-          // All reels have been stopped, reset
           this.currentStopIndex = -1
           this.resultIndices = []
         }

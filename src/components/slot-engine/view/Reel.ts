@@ -17,17 +17,14 @@ export class Reel {
   private scrolling: ScrollingSystem
   private config: SlotConfig
 
-  // State machine
   private stateMachine = createActor(reelMachine)
 
-  // Physics variables
   private speed: number = 0
   private get MAX_SPEED(): number {
     return this.config.SPIN_SPEED
   }
-  private readonly ACCELERATION: number = 0.5 // Acceleration per frame
+  private readonly ACCELERATION: number = 0.5
 
-  // Pre-stop phase calculation variables
   private preStopCalculated: boolean = false
   private stopOvershoot: number = 0
 
@@ -38,7 +35,6 @@ export class Reel {
     this.config = config
     this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId(), config)
 
-    // Start the state machine
     this.stateMachine.start()
   }
 

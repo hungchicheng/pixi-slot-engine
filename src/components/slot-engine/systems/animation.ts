@@ -2,7 +2,6 @@ import { Application } from 'pixi.js'
 import { Back } from 'gsap'
 import type { Tile } from '../view/Tile'
 import type { SlotConfig } from '../logic/types'
-import { LayoutSystem } from './layout'
 
 export class AnimationSystem {
   private stopStartY: number = 0
@@ -35,12 +34,10 @@ export class AnimationSystem {
     const elapsed = Date.now() - this.stopStartTime
 
     if (elapsed <= IMPACT_DURATION) {
-      // Impact phase: linear movement to target position
       const progress = elapsed / IMPACT_DURATION
       const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * progress
       this.applyOffset(currentOffset)
     } else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
-      // Recovery phase: use Back.out easing for bounce effect
       const recoverElapsed = elapsed - IMPACT_DURATION
       const progress = recoverElapsed / RECOVER_DURATION
       // Use Back.out easing function
@@ -49,6 +46,8 @@ export class AnimationSystem {
 
       this.applyOffset(currentOffset)
     } else {
+      // Ensure we land exactly on the target (offset 0 relative to logical center)
+      this.applyOffset(0)
       this.finalize()
       return true
     }
@@ -66,13 +65,52 @@ export class AnimationSystem {
   }
 
   private finalize(): void {
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-
-    LayoutSystem.alignTilesToCenter(this.tiles, centerY, this.config)
-
+    // 1. Cleanup state
     this.tiles.forEach(tile => {
       delete (tile as any).initialY
     })
+
+    // Rebalance tiles to ensure proper buffer distribution
+    const { SYMBOL_SIZE, SPACING } = this.config
+    const centerY = this.app.screen.height / 2
+
+    this.tiles.sort((a, b) => a.sprite.y - b.sprite.y)
+
+    // Find the tile closest to center
+    let closestTile = this.tiles[0]
+    let minDiff = Math.abs(closestTile.sprite.y - centerY)
+
+    for (let i = 1; i < this.tiles.length; i++) {
+      const diff = Math.abs(this.tiles[i].sprite.y - centerY)
+      if (diff < minDiff) {
+        minDiff = diff
+        closestTile = this.tiles[i]
+      }
+    }
+
+    const centerIndex = this.tiles.indexOf(closestTile)
+    const expectedIndex = Math.floor(this.tiles.length / 2)
+
+    if (centerIndex < expectedIndex) {
+      // Shift Down
+      const diff = expectedIndex - centerIndex
+      for (let i = 0; i < diff; i++) {
+        const t = this.tiles.pop()
+        if (t) {
+          t.sprite.y = this.tiles[0].sprite.y - SYMBOL_SIZE - SPACING
+          this.tiles.unshift(t)
+        }
+      }
+    } else if (centerIndex > expectedIndex) {
+      // Shift Up
+      const diff = centerIndex - expectedIndex
+      for (let i = 0; i < diff; i++) {
+        const t = this.tiles.shift()
+        if (t) {
+          t.sprite.y = this.tiles[this.tiles.length - 1].sprite.y + SYMBOL_SIZE + SPACING
+          this.tiles.push(t)
+        }
+      }
+    }
   }
 }

@@ -33,7 +33,6 @@ function stopSpin() {
 const handleMounted = async () => {
   if (!canvasRef.value) return
 
-  // Initialize Pixi
   app = new Application({
     view: canvasRef.value!,
     width: canvasRef.value!.clientWidth,
@@ -44,36 +43,29 @@ const handleMounted = async () => {
     autoDensity: true,
   })
 
-  // DevTools support
   if (import.meta.env.DEV) {
     ;(window as any).__PIXI_APP__ = app
   }
 
-  // Preload all images
   await preloadSymbolImages(app)
 
-  // Initialize slot engine with config from store
   slotEngine = new SlotEngine(app, gameStore.slotConfig)
   await slotEngine.initialize()
 
-  // Watch for config changes and update engine
   watch(() => gameStore.slotConfig, (newConfig) => {
     if (slotEngine) {
       slotEngine.updateConfig(newConfig)
     }
   }, { deep: true })
 
-  // Update reel states periodically
   const updateStates = () => {
     if (slotEngine) {
       reelStates.value = slotEngine.getStates()
     }
   }
 
-  // Update states every 100ms
   stateInterval = setInterval(updateStates, 100)
 
-  // Game status watcher
   const getStatus = () => {
     return gameStore.status
   }
@@ -90,7 +82,6 @@ const handleMounted = async () => {
 
   watch(getStatus, handleStatusChange)
 
-  // Handle window resize
   const handleResize = () => {
     if (app && canvasRef.value && slotEngine) {
       app.renderer.resize(canvasRef.value.clientWidth, canvasRef.value.clientHeight)

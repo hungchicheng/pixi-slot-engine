@@ -21,19 +21,20 @@ export class LayoutSystem {
   static alignTilesToCenter(tiles: Tile[], centerY: number, config: SlotConfig): void {
     const { SYMBOL_SIZE } = config
 
-    // Re-align tiles to proper positions
+    // Re-align tiles to proper positions based on index:
+    // 0: Top buffer (hidden)
+    // 1: First visible row
+    // 2: Center visible row
+    // 3: Third visible row
+    // 4: Bottom buffer (hidden)
     tiles.forEach((tile, index) => {
       if (index === 0) {
-        // Top buffer
         tile.sprite.y = centerY - SYMBOL_SIZE * 2
       } else if (index === 1) {
-        // First visible
         tile.sprite.y = centerY - SYMBOL_SIZE
       } else if (index === 2) {
-        // Second visible
         tile.sprite.y = centerY
       } else if (index === 3) {
-        // Third visible
         tile.sprite.y = centerY + SYMBOL_SIZE
       } else {
         // Bottom buffer
