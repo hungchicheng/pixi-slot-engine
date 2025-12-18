@@ -62,7 +62,7 @@ export class Tile implements IReelTile {
       const blurred = getBlurredTexture(textureId)
       if (blurred) {
         this.sprite.texture = blurred
-        this.sprite.height = this.size * 1.2 // Scale up to cover vertical gaps
+        this.sprite.height = this.size * 1.2
         return
       }
     }
@@ -76,7 +76,7 @@ export class Tile implements IReelTile {
     const blurred = getBlurredTexture(this.textureId)
     if (blurred) {
       this.sprite.texture = blurred
-      this.sprite.height = this.size * 1.2 // Scale up to cover vertical gaps
+      this.sprite.height = this.size * 1.2
     }
   }
 
@@ -86,7 +86,7 @@ export class Tile implements IReelTile {
     const original = getOriginalTexture(this.textureId)
     if (original) {
       this.sprite.texture = original
-      this.sprite.height = this.size // Reset height
+      this.sprite.height = this.size
     }
   }
 

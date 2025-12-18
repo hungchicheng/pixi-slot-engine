@@ -62,11 +62,11 @@ export class ScrollingSystem {
 
     // Recycle tiles that moved off-screen
     const tilesPerColumn = this.config.ROWS + BUFFER_COUNT
-    const halfTiles = Math.floor(tilesPerColumn / 2)
     const unitSize = SYMBOL_SIZE + this.config.SPACING
 
-    // limitY: slightly below the bottom-most resting position
-    const limitY = centerY + halfTiles * unitSize + SYMBOL_SIZE / 2
+    // limitY: slightly above the exact half-point to correct downward drift
+    // Adjust by -0.5 unit to match the Idle Bottom position exactly
+    const limitY = centerY + (tilesPerColumn * unitSize) / 2 - unitSize / 2
 
     for (let i = this.tiles.length - 1; i >= 0; i--) {
       if (this.tiles[i].sprite.y > limitY) {
@@ -109,12 +109,18 @@ export class ScrollingSystem {
     }
 
     // Check stop condition
-    // We iterate to find if the target tile has passed the center
-    // Note: We only check tiles that are marked as target
+    // Calculate the Y position where the "Target Tile" should land.
+    const centerIndex = (tilesPerColumn - 1) / 2
+    const stopIndex = Math.floor(tilesPerColumn / 2)
+
+    // The precise Y position where the target tile should stop to align the grid correctly
+    const stopY = centerY + (stopIndex - centerIndex) * unitSize
+
+    // We iterate to find if the target tile has passed the stop line
     for (const tile of this.tiles) {
       if ((tile as any).isTarget) {
-        if (tile.sprite.y >= centerY) {
-          overshoot = tile.sprite.y - centerY
+        if (tile.sprite.y >= stopY) {
+          overshoot = tile.sprite.y - stopY
           break // Found it
         }
       }
