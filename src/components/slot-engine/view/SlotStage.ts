@@ -13,18 +13,27 @@ export class SlotStage {
   constructor(app: Application, container: Container, config: SlotConfig) {
     this.app = app
     this.container = container
-    this.config = config
+    this.config = { ...config } // Store a copy to detect changes later
   }
 
   updateConfig(config: SlotConfig) {
-    this.config = config
-    // Reinitialize reels if column count changed
-    if (this.reels.length !== config.COLUMNS) {
+    // Check if layout parameters changed
+    const resetRequired =
+      this.config.COLUMNS !== config.COLUMNS ||
+      this.config.ROWS !== config.ROWS ||
+      this.config.SYMBOL_SIZE !== config.SYMBOL_SIZE ||
+      this.config.SPACING !== config.SPACING ||
+      this.config.COLUMN_SPACING !== config.COLUMN_SPACING
+
+    this.config = { ...config }
+
+    // Reinitialize reels if layout changed
+    if (resetRequired) {
       this.destroy()
       this.initialize()
     } else {
-      // Update existing reels
-      this.reels.forEach(reel => reel.updateConfig(config))
+      // Update existing reels (for speed/timing changes)
+      this.reels.forEach(reel => reel.updateConfig(this.config))
     }
   }
 
