@@ -60,12 +60,12 @@ const groups = {
         <div v-for="field in fields" :key="field.key" class="space-y-1">
           <div class="flex justify-between text-xs">
             <label :for="field.key" class="text-gray-300">{{ field.label }}</label>
-            <span class="font-mono text-yellow-500">{{ gameStore.slotConfig[field.key as keyof typeof gameStore.slotConfig] }}</span>
+            <span class="font-mono text-yellow-500">{{ (gameStore.slotConfig as any)[field.key] }}</span>
           </div>
           <input
             :id="field.key"
             type="range"
-            v-model.number="gameStore.slotConfig[field.key as keyof typeof gameStore.slotConfig]"
+            v-model.number="(gameStore.slotConfig as any)[field.key]"
             :min="field.min"
             :max="field.max"
             :step="field.step"
