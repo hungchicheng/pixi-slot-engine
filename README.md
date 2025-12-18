@@ -1,15 +1,19 @@
 # Slot Engine
 
-A modern project built with Vue 3 + Pinia + Tailwind CSS + Pixi.js.
+A modern project built with Pixi.js + Vue 3 + Pinia + Tailwind CSS.
+
+## Live Demo
+
+[Play Demo](https://hungchicheng.github.io/pixi-slot-engine/)
 
 ## Tech Stack
 
+- **Pixi.js** - High-performance 2D WebGL rendering engine
 - **Vue 3** - Progressive JavaScript framework
 - **TypeScript** - Type-safe JavaScript superset
 - **Pinia** - Vue state management library
 - **XState** - State machine library for complex state management
 - **Tailwind CSS** - Utility-first CSS framework
-- **Pixi.js** - High-performance 2D WebGL rendering engine
 - **Vite** - Next-generation frontend build tool
 - **pnpm** - Fast, disk space efficient package manager
 - **Prettier** - Code formatter
@@ -135,6 +139,7 @@ The slot engine follows a **"Brain (Logic) vs Muscle (View) vs Skeleton (Core)"*
 - **`systems/`** - Behavior systems that make views move - scrolling, layout, animation calculations
 
 This separation ensures:
+
 - **Testability**: Logic layer has no Pixi dependencies
 - **Maintainability**: Clear responsibilities for each layer
 - **Performance**: Physical variables stay in systems, not in state machine context
@@ -181,12 +186,12 @@ Assuming window height is 300px (each tile is 100px):
 
 #### Alternative Approaches Comparison
 
-| Approach | Tile Count (per reel) | Pros | Cons | Rating |
-|----------|----------------------|------|------|--------|
-| Exactly 3 | 3 | Most memory efficient | Cannot spin. Moving will create blank gaps | ❌ Not feasible |
-| 4 Tiles | 4 (1 buffer + 3 visible) | Works | Logic is tight. If speed is too fast or frame drops (Lag), edge glitches are likely | ⚠️ Barely usable |
-| **5 Tiles** | **5 (1 top + 3 visible + 1 bottom)** | **Best balance** | - | ✅ **Recommended** |
-| Strip Texture | N/A (controlled by texture) | Suitable for blur effects | Complex implementation, requires UV Offset or Tiling Sprite handling, difficult to animate individual symbols (e.g., win flash) | ⚠️ Advanced usage |
+| Approach      | Tile Count (per reel)                | Pros                      | Cons                                                                                                                            | Rating             |
+| ------------- | ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Exactly 3     | 3                                    | Most memory efficient     | Cannot spin. Moving will create blank gaps                                                                                      | ❌ Not feasible    |
+| 4 Tiles       | 4 (1 buffer + 3 visible)             | Works                     | Logic is tight. If speed is too fast or frame drops (Lag), edge glitches are likely                                             | ⚠️ Barely usable   |
+| **5 Tiles**   | **5 (1 top + 3 visible + 1 bottom)** | **Best balance**          | -                                                                                                                               | ✅ **Recommended** |
+| Strip Texture | N/A (controlled by texture)          | Suitable for blur effects | Complex implementation, requires UV Offset or Tiling Sprite handling, difficult to animate individual symbols (e.g., win flash) | ⚠️ Advanced usage  |
 
 #### Performance Benefits
 
@@ -206,6 +211,7 @@ The slot engine uses **XState** to manage complex state transitions, ensuring ro
 - **Physical Variables**: Speed and position are kept in the class, NOT in XState context for high performance
 
 This separation ensures:
+
 - **High Performance**: No reactivity overhead from state changes affecting 60fps rendering
 - **Maintainability**: State logic is clearly defined and easy to modify
 - **Debuggability**: State transitions can be visualized and tracked
@@ -218,25 +224,25 @@ idle → accelerating → spinning → pre_stop → bounce → idle
 
 #### State Descriptions
 
-| State | Description | Trigger | Next State |
-|-------|-------------|---------|------------|
-| **idle** | Initial state, reel is stationary | `START` event | `accelerating` |
-| **accelerating** | Reel is speeding up | `SPEED_REACHED` event (when max speed reached) | `spinning` |
-| **spinning** | Reel is spinning at maximum speed, waiting for server response | `STOP_COMMAND` event (with Guard check) | `pre_stop` |
-| **pre_stop** | Positioning to target location | `READY_TO_STOP` event | `bounce` |
-| **decelerating** | (Deprecated) Reel is slowing down - no longer used, pre_stop goes directly to bounce | `STOPPED` event (when speed < threshold) | `bounce` |
-| **bounce** | Final bounce animation | `ANIMATION_DONE` event | `idle` |
+| State            | Description                                                                          | Trigger                                        | Next State     |
+| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------- |
+| **idle**         | Initial state, reel is stationary                                                    | `START` event                                  | `accelerating` |
+| **accelerating** | Reel is speeding up                                                                  | `SPEED_REACHED` event (when max speed reached) | `spinning`     |
+| **spinning**     | Reel is spinning at maximum speed, waiting for server response                       | `STOP_COMMAND` event (with Guard check)        | `pre_stop`     |
+| **pre_stop**     | Positioning to target location                                                       | `READY_TO_STOP` event                          | `bounce`       |
+| **decelerating** | (Deprecated) Reel is slowing down - no longer used, pre_stop goes directly to bounce | `STOPPED` event (when speed < threshold)       | `bounce`       |
+| **bounce**       | Final bounce animation                                                               | `ANIMATION_DONE` event                         | `idle`         |
 
 #### Events
 
-| Event | Description | Sent By |
-|-------|-------------|---------|
-| `START` | Begin spinning | User action / `startSpin()` |
-| `SPEED_REACHED` | Speed has reached maximum | Pixi ticker (when `speed >= MAX_SPEED`) |
-| `STOP_COMMAND` | Request to stop with target index | Server response / `stopSpin(resultIndex)` |
-| `READY_TO_STOP` | Positioned to target location, ready to stop | Pixi ticker (after positioning to target) |
-| `STOPPED` | (Deprecated) Deceleration complete, reel stopped - no longer used | Pixi ticker (when `speed < MIN_SPEED`) |
-| `ANIMATION_DONE` | Bounce animation complete | Pixi ticker (after animation finishes) |
+| Event            | Description                                                       | Sent By                                   |
+| ---------------- | ----------------------------------------------------------------- | ----------------------------------------- |
+| `START`          | Begin spinning                                                    | User action / `startSpin()`               |
+| `SPEED_REACHED`  | Speed has reached maximum                                         | Pixi ticker (when `speed >= MAX_SPEED`)   |
+| `STOP_COMMAND`   | Request to stop with target index                                 | Server response / `stopSpin(resultIndex)` |
+| `READY_TO_STOP`  | Positioned to target location, ready to stop                      | Pixi ticker (after positioning to target) |
+| `STOPPED`        | (Deprecated) Deceleration complete, reel stopped - no longer used | Pixi ticker (when `speed < MIN_SPEED`)    |
+| `ANIMATION_DONE` | Bounce animation complete                                         | Pixi ticker (after animation finishes)    |
 
 #### Guards
 
@@ -258,10 +264,10 @@ The state machine context stores:
 
 ```typescript
 // Start spinning
-reel.startSpin()  // Sends START event
+reel.startSpin() // Sends START event
 
 // Stop spinning (state machine checks Guard before accepting)
-reel.stopSpin(resultIndex)  // Sends STOP_COMMAND event
+reel.stopSpin(resultIndex) // Sends STOP_COMMAND event
 
 // The update loop automatically handles state transitions
 // Physical variables (speed, position) are updated in the ticker
@@ -275,34 +281,6 @@ reel.stopSpin(resultIndex)  // Sends STOP_COMMAND event
 3. **Async Handling**: Guards ensure proper timing (e.g., minimum spin duration)
 4. **Extensibility**: Easy to add new states (e.g., Free Game mode, Bonus rounds)
 5. **Type Safety**: Full TypeScript support for states, events, and context
-
-## Development Guide
-
-### Using Pinia Store
-
-```typescript
-import { useGameStore } from '@/stores/game'
-
-const gameStore = useGameStore()
-gameStore.incrementScore()
-```
-
-### Using Pixi.js
-
-In the `PixiCanvas.vue` component, you can see how to:
-- Initialize Pixi.js application
-- Create graphics and animations
-- Handle responsive adjustments
-
-### Using Tailwind CSS
-
-The project is configured with Tailwind CSS, you can directly use Tailwind utility classes:
-
-```vue
-<div class="bg-blue-500 text-white p-4 rounded-lg">
-  Content
-</div>
-```
 
 ## License
 

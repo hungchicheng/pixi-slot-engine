@@ -63,10 +63,7 @@ export class Reel {
       // row 0 is top-most. centerIndex is the tile at the center.
       const y = centerY + (row - centerIndex) * (SYMBOL_SIZE + SPACING)
 
-      // Generate sequence number: column * 1000 + row (to ensure uniqueness)
-      const sequenceNumber = this.column * 1000 + row
-
-      const tile = new Tile(texture, textureId, this.column, x, y, SYMBOL_SIZE, sequenceNumber)
+      const tile = new Tile(texture, textureId, this.column, x, y, SYMBOL_SIZE)
       this.tiles.push(tile)
       this.container.addChild(tile.sprite)
     }

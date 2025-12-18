@@ -13,8 +13,8 @@ provide('pixiCanvasRef', pixiCanvasRef)
     <ConfigPanel />
     
     <header class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 p-4">
-      <h1 class="text-3xl font-bold text-white text-center">Slot Engine</h1>
-      <p class="text-gray-300 text-center mt-2">Vue 3 + Pinia + Tailwind CSS + Pixi.js</p>
+      <h1 class="text-3xl font-bold text-white text-center">Pixi Slot Engine</h1>
+      <p class="text-gray-300 text-center mt-2">Pixi.js + Vue 3 + Pinia + Tailwind CSS</p>
     </header>
     
     <main class="flex-1 flex items-center justify-center p-4">

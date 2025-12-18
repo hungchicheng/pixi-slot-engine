@@ -1,4 +1,4 @@
-import { Sprite, Texture, Text, TextStyle } from 'pixi.js'
+import { Sprite, Texture } from 'pixi.js'
 import type { ReelTile as IReelTile } from './types'
 import { getOriginalTexture, getBlurredTexture } from '@/utils/preloadAssets'
 
@@ -6,20 +6,15 @@ export class Tile implements IReelTile {
   sprite: Sprite
   textureId: number
   column: number
-  private sequenceNumber: number
-  private sequenceText: Text
   private isBlurred: boolean = false
-
   private size: number
-
   constructor(
     texture: Texture,
     textureId: number,
     column: number,
     x: number,
     y: number,
-    size: number,
-    sequenceNumber: number
+    size: number
   ) {
     this.size = size
     this.sprite = new Sprite(texture)
@@ -31,29 +26,6 @@ export class Tile implements IReelTile {
 
     this.textureId = textureId
     this.column = column
-    this.sequenceNumber = sequenceNumber
-
-    // Create sequence number text
-    const textStyle = new TextStyle({
-      fontFamily: 'Arial',
-      fontSize: 24,
-      fill: 0xffffff,
-      stroke: 0x000000,
-      strokeThickness: 2,
-      align: 'center',
-    })
-
-    this.sequenceText = new Text(sequenceNumber.toString(), textStyle)
-    this.sequenceText.anchor.set(0.5)
-    this.sequenceText.x = 0
-    this.sequenceText.y = 0
-
-    // Add text to sprite container
-    this.sprite.addChild(this.sequenceText)
-  }
-
-  getSequenceNumber(): number {
-    return this.sequenceNumber
   }
 
   updateTexture(texture: Texture, textureId: number) {
@@ -91,9 +63,6 @@ export class Tile implements IReelTile {
   }
 
   destroy() {
-    if (this.sequenceText) {
-      this.sequenceText.destroy()
-    }
     this.sprite.destroy()
   }
 }
