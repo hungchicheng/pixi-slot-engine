@@ -1,6 +1,7 @@
 import { Application } from 'pixi.js'
 import { Back } from 'gsap'
 import type { Tile } from '../view/Tile'
+import type { SlotConfig } from '../logic/types'
 import { LayoutSystem } from './layout'
 
 export class AnimationSystem {
@@ -9,17 +10,19 @@ export class AnimationSystem {
   private stopStartTime: number = 0
   private app: Application
   private tiles: Tile[]
+  private config: SlotConfig
 
-  constructor(app: Application, tiles: Tile[]) {
+  constructor(app: Application, tiles: Tile[], config: SlotConfig) {
     this.app = app
     this.tiles = tiles
+    this.config = config
   }
 
   start(startOffset: number = 0): void {
-    const IMPACT_POINT = 70
+    const { IMPACT_OFFSET } = this.config
 
     this.stopStartY = startOffset
-    this.stopTargetY = IMPACT_POINT
+    this.stopTargetY = IMPACT_OFFSET
     this.stopStartTime = Date.now()
 
     this.tiles.forEach(tile => {
@@ -28,8 +31,7 @@ export class AnimationSystem {
   }
 
   update = (): boolean => {
-    const IMPACT_DURATION = 200 // Impact phase duration (ms)
-    const RECOVER_DURATION = 400 // Recovery phase duration (ms)
+    const { IMPACT_DURATION, RECOVER_DURATION } = this.config
     const elapsed = Date.now() - this.stopStartTime
 
     if (elapsed <= IMPACT_DURATION) {
@@ -37,17 +39,16 @@ export class AnimationSystem {
       const progress = elapsed / IMPACT_DURATION
       const currentOffset = this.stopStartY + (this.stopTargetY - this.stopStartY) * progress
       this.applyOffset(currentOffset)
-    }
-    else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
+    } else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
       // Recovery phase: use Back.out easing for bounce effect
       const recoverElapsed = elapsed - IMPACT_DURATION
       const progress = recoverElapsed / RECOVER_DURATION
-      // Use Back.out easing function, overshoot parameter controls bounce intensity (default 1.7)
-      const easedProgress = Back.easeOut.config(1.7)(progress)
+      // Use Back.out easing function
+      const easedProgress = Back.easeOut.config(0.5)(progress)
       const currentOffset = this.stopTargetY * (1 - easedProgress)
+
       this.applyOffset(currentOffset)
-    }
-    else {
+    } else {
       this.finalize()
       return true
     }
@@ -68,7 +69,7 @@ export class AnimationSystem {
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 
-    LayoutSystem.alignTilesToCenter(this.tiles, centerY)
+    LayoutSystem.alignTilesToCenter(this.tiles, centerY, this.config)
 
     this.tiles.forEach(tile => {
       delete (tile as any).initialY

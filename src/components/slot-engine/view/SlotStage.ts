@@ -1,6 +1,6 @@
 import { Application, Container } from 'pixi.js'
 import { Reel } from './Reel'
-import { SLOT_CONFIG } from '../logic/config'
+import type { SlotConfig } from '../logic/types'
 
 export class SlotStage {
   private app: Application
@@ -8,23 +8,37 @@ export class SlotStage {
   private reels: Reel[] = []
   private resultIndices: number[] = []
   private currentStopIndex: number = -1 // -1 means no stop sequence in progress
+  private config: SlotConfig
 
-  constructor(app: Application, container: Container) {
+  constructor(app: Application, container: Container, config: SlotConfig) {
     this.app = app
     this.container = container
+    this.config = config
+  }
+
+  updateConfig(config: SlotConfig) {
+    this.config = config
+    // Reinitialize reels if column count changed
+    if (this.reels.length !== config.COLUMNS) {
+      this.destroy()
+      this.initialize()
+    } else {
+      // Update existing reels
+      this.reels.forEach(reel => reel.updateConfig(config))
+    }
   }
 
   initialize() {
     // Create a reel for each column
-    for (let col = 0; col < SLOT_CONFIG.COLUMNS; col++) {
-      const reel = new Reel(this.app, this.container, col)
+    for (let col = 0; col < this.config.COLUMNS; col++) {
+      const reel = new Reel(this.app, this.container, col, this.config)
       reel.initialize()
       this.reels.push(reel)
     }
   }
 
   update = (delta: number = 1) => {
-    this.reels.forEach((reel) => {
+    this.reels.forEach(reel => {
       reel.update(delta)
     })
 
@@ -38,8 +52,11 @@ export class SlotStage {
       if (currentState === 'idle') {
         // Move to next reel
         this.currentStopIndex++
-        
-        if (this.currentStopIndex < this.reels.length && this.currentStopIndex < this.resultIndices.length) {
+
+        if (
+          this.currentStopIndex < this.reels.length &&
+          this.currentStopIndex < this.resultIndices.length
+        ) {
           // Stop the next reel
           this.reels[this.currentStopIndex].stopSpin(this.resultIndices[this.currentStopIndex])
         } else {
@@ -55,8 +72,8 @@ export class SlotStage {
     // Reset stop sequence when starting new spin
     this.currentStopIndex = -1
     this.resultIndices = []
-    
-    this.reels.forEach((reel) => {
+
+    this.reels.forEach(reel => {
       reel.startSpin()
     })
   }
@@ -78,20 +95,19 @@ export class SlotStage {
   }
 
   updatePositions() {
-    this.reels.forEach((reel) => {
+    this.reels.forEach(reel => {
       reel.updatePositions()
     })
   }
 
   getStates(): string[] {
-    return this.reels.map((reel) => reel.getState())
+    return this.reels.map(reel => reel.getState())
   }
 
   destroy() {
-    this.reels.forEach((reel) => {
+    this.reels.forEach(reel => {
       reel.destroy()
     })
     this.reels = []
   }
 }
-

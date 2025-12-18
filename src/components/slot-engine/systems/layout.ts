@@ -1,10 +1,10 @@
 import { Application } from 'pixi.js'
 import type { Tile } from '../view/Tile'
-import { SLOT_CONFIG } from '../logic/config'
+import type { SlotConfig } from '../logic/types'
 
 export class LayoutSystem {
-  static calculateXPosition(app: Application, column: number): number {
-    const { SYMBOL_SIZE, COLUMN_SPACING, COLUMNS } = SLOT_CONFIG
+  static calculateXPosition(app: Application, column: number, config: SlotConfig): number {
+    const { SYMBOL_SIZE, COLUMN_SPACING, COLUMNS } = config
     const totalWidth = COLUMNS * SYMBOL_SIZE + (COLUMNS - 1) * COLUMN_SPACING
     const startX = (app.screen.width - totalWidth) / 2
     return startX + column * (SYMBOL_SIZE + COLUMN_SPACING) + SYMBOL_SIZE / 2
@@ -18,8 +18,8 @@ export class LayoutSystem {
     })
   }
 
-  static alignTilesToCenter(tiles: Tile[], centerY: number): void {
-    const { SYMBOL_SIZE } = SLOT_CONFIG
+  static alignTilesToCenter(tiles: Tile[], centerY: number, config: SlotConfig): void {
+    const { SYMBOL_SIZE } = config
 
     // Re-align tiles to proper positions
     tiles.forEach((tile, index) => {
@@ -42,8 +42,13 @@ export class LayoutSystem {
     })
   }
 
-  static updateTileXPositions(tiles: Tile[], app: Application, column: number): void {
-    const x = this.calculateXPosition(app, column)
+  static updateTileXPositions(
+    tiles: Tile[],
+    app: Application,
+    column: number,
+    config: SlotConfig
+  ): void {
+    const x = this.calculateXPosition(app, column, config)
 
     tiles.forEach(tile => {
       tile.sprite.x = x

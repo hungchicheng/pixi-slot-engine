@@ -1,7 +1,7 @@
 import { Application, Container, Texture } from 'pixi.js'
 import { createActor } from 'xstate'
 import { Tile } from './Tile'
-import { SLOT_CONFIG } from '../logic/config'
+import type { SlotConfig } from '../logic/types'
 import { getOriginalTexture, symbolImages } from '@/utils/preloadAssets'
 import { LayoutSystem } from '../systems/layout'
 import { AnimationSystem } from '../systems/animation'
@@ -15,34 +15,41 @@ export class Reel {
   private column: number
   private stopAnimation: AnimationSystem | null = null
   private scrolling: ScrollingSystem
+  private config: SlotConfig
 
   // State machine
   private stateMachine = createActor(reelMachine)
 
   // Physics variables
   private speed: number = 0
-  private readonly MAX_SPEED: number = SLOT_CONFIG.SPIN_SPEED
+  private get MAX_SPEED(): number {
+    return this.config.SPIN_SPEED
+  }
   private readonly ACCELERATION: number = 0.5 // Acceleration per frame
-  private readonly DECELERATION_FACTOR: number = 0.95 // Deceleration factor
-  private readonly MIN_SPEED: number = 0.1 // Minimum speed threshold
 
   // Pre-stop phase calculation variables
   private preStopCalculated: boolean = false
   private stopOvershoot: number = 0
 
-  constructor(app: Application, container: Container, column: number) {
+  constructor(app: Application, container: Container, column: number, config: SlotConfig) {
     this.app = app
     this.container = container
     this.column = column
-    this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId())
+    this.config = config
+    this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId(), config)
 
     // Start the state machine
     this.stateMachine.start()
   }
 
+  updateConfig(config: SlotConfig) {
+    this.config = config
+    this.scrolling.updateConfig(config)
+  }
+
   initialize(): void {
-    const { SYMBOL_SIZE, TILES_PER_COLUMN } = SLOT_CONFIG
-    const x = LayoutSystem.calculateXPosition(this.app, this.column)
+    const { SYMBOL_SIZE, TILES_PER_COLUMN } = this.config
+    const x = LayoutSystem.calculateXPosition(this.app, this.column, this.config)
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 
@@ -111,7 +118,6 @@ export class Reel {
     } else if (stateValue === 'spinning') {
       // Spinning phase: maintain maximum speed
       this.speed = this.MAX_SPEED
-      this.speed = this.MAX_SPEED
       this.scrolling.updateWithSpeed(this.speed)
       // Note: Spin duration is checked by Guard on STOP_COMMAND event, using Date.now() - context.spinStartTime
     } else if (stateValue === 'pre_stop') {
@@ -137,7 +143,7 @@ export class Reel {
       if (!this.stopAnimation) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
-          this.stopAnimation = new AnimationSystem(this.app, this.tiles)
+          this.stopAnimation = new AnimationSystem(this.app, this.tiles, this.config)
           this.stopAnimation.start(this.stopOvershoot)
         }
       }
@@ -154,7 +160,7 @@ export class Reel {
   }
 
   updatePositions(): void {
-    LayoutSystem.updateTileXPositions(this.tiles, this.app, this.column)
+    LayoutSystem.updateTileXPositions(this.tiles, this.app, this.column, this.config)
   }
 
   private getRandomTextureId(): number {

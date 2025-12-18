@@ -7,7 +7,7 @@ const gameStore = useGameStore()
 const pixiCanvasRef = inject<{ value: InstanceType<typeof PixiCanvas> | null }>('pixiCanvasRef')
 
 const reelStates = computed(() => {
-  return pixiCanvasRef?.value?.reelStates || ['idle', 'idle', 'idle']
+  return pixiCanvasRef?.value?.reelStates || Array(gameStore.slotConfig.COLUMNS).fill('idle')
 })
 
 const statesDisplay = computed(() => {

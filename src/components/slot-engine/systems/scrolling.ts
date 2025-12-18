@@ -1,20 +1,31 @@
 import { Application, Texture } from 'pixi.js'
 import type { Tile } from '../view/Tile'
-import { SLOT_CONFIG } from '../logic/config'
+import type { SlotConfig } from '../logic/types'
 import { getOriginalTexture } from '@/utils/preloadAssets'
 
 export class ScrollingSystem {
   private app: Application
   private tiles: Tile[]
   private getRandomTextureId: () => number
+  private config: SlotConfig
 
   private targetIndex: number | null = null
   private tilesToStop: number = -1
 
-  constructor(app: Application, tiles: Tile[], getRandomTextureId: () => number) {
+  constructor(
+    app: Application,
+    tiles: Tile[],
+    getRandomTextureId: () => number,
+    config: SlotConfig
+  ) {
     this.app = app
     this.tiles = tiles
     this.getRandomTextureId = getRandomTextureId
+    this.config = config
+  }
+
+  updateConfig(config: SlotConfig) {
+    this.config = config
   }
 
   setTargetIndex(index: number, minimumRemainingSpins: number = 5): void {
@@ -27,7 +38,7 @@ export class ScrollingSystem {
    * Update with fixed speed (backward compatible)
    */
   update(): void {
-    const { SPIN_SPEED } = SLOT_CONFIG
+    const { SPIN_SPEED } = this.config
     this.updateWithSpeed(SPIN_SPEED)
   }
 
@@ -37,7 +48,7 @@ export class ScrollingSystem {
    * @returns number | null: The overshoot amount if stopped, null otherwise
    */
   updateWithSpeed(speed: number): number | null {
-    const { SYMBOL_SIZE } = SLOT_CONFIG
+    const { SYMBOL_SIZE } = this.config
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
 

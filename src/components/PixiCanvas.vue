@@ -9,7 +9,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
 let app: Application | null = null
 let slotEngine: SlotEngine | null = null
-const reelStates = ref<string[]>(['idle', 'idle', 'idle'])
+const reelStates = ref<string[]>(Array(gameStore.slotConfig.COLUMNS).fill('idle'))
 let stateInterval: ReturnType<typeof setInterval> | null = null
 
 
@@ -21,8 +21,9 @@ function startSpin() {
 
 function stopSpin() {
   if (slotEngine) {
-    // Generate random result indices (0-5 for each column)
-    const resultIndices = Array.from({ length: 3 }, () =>
+    // Generate random result indices (0-5 for each column) based on current config
+    const { COLUMNS } = slotEngine.getConfig()
+    const resultIndices = Array.from({ length: COLUMNS }, () =>
       Math.floor(Math.random() * 6)
     )
     slotEngine.stopSpin(resultIndices)
@@ -51,9 +52,16 @@ const handleMounted = async () => {
   // Preload all images
   await preloadSymbolImages(app)
 
-  // Initialize slot engine
-  slotEngine = new SlotEngine(app)
+  // Initialize slot engine with config from store
+  slotEngine = new SlotEngine(app, gameStore.slotConfig)
   await slotEngine.initialize()
+
+  // Watch for config changes and update engine
+  watch(() => gameStore.slotConfig, (newConfig) => {
+    if (slotEngine) {
+      slotEngine.updateConfig(newConfig)
+    }
+  }, { deep: true })
 
   // Update reel states periodically
   const updateStates = () => {
