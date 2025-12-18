@@ -20,42 +20,10 @@ A modern project built with Pixi.js + Vue 3 + Pinia + Tailwind CSS.
 
 ## Getting Started
 
-### Install Dependencies
-
 ```bash
 pnpm install
-```
-
-### Development Mode
-
-```bash
 pnpm dev
-```
-
-### Build for Production
-
-```bash
 pnpm build
-```
-
-### Preview Production Build
-
-```bash
-pnpm preview
-```
-
-### Code Formatting
-
-Format all code:
-
-```bash
-pnpm format
-```
-
-Check code format:
-
-```bash
-pnpm format:check
 ```
 
 ## Project Structure
@@ -127,94 +95,43 @@ The slot engine follows a clear separation of concerns:
 - ✅ XState state machine for robust state management
 - ✅ Accelerating, spinning, and bounce animations
 
-## Architecture
+### Key Technical Implementations
 
-### Directory Structure Philosophy
+#### 1. Pre-generated Blur Textures (Optimization)
 
-The slot engine follows a **"Brain (Logic) vs Muscle (View) vs Skeleton (Core)"** separation strategy:
+To ensure 60fps performance during high-speed spinning, we do NOT apply real-time blur filters (which are expensive). Instead, we pre-generate blurred versions of all symbols at application startup.
 
-- **`core/`** - Core infrastructure that coordinates the entire engine
-- **`logic/`** - Pure logic layer (XState machines, math calculations) - can run unit tests without rendering
-- **`view/`** - Pure visual layer (Pixi Sprite/Container) - only handles visual representation
-- **`systems/`** - Behavior systems that make views move - scrolling, layout, animation calculations
+- **Process**: At app launch, we generate a `symbol_blur.png` for each symbol.
+- **Storage**: These textures are stored in a global Cache.
+- **Usage**: When the reel spins fast, we simply swap the texture from `symbol.png` to `symbol_blur.png`. This is a cheap O(1) operation compared to calculating Gaussian blur every frame.
 
-This separation ensures:
+#### 2. Infinite Scrolling Logic (Recycle System)
 
-- **Testability**: Logic layer has no Pixi dependencies
-- **Maintainability**: Clear responsibilities for each layer
-- **Performance**: Physical variables stay in systems, not in state machine context
+The infinite scrolling illusion is achieved by checking the Y-position of each tile in the `ScrollingSystem`:
 
-### Slot Machine Reel System
+```typescript
+// Pseudo-code logic
+if (tile.y > limits.bottom) {
+  // 1. Move tile to the very top (above buffer)
+  tile.y = limits.top
 
-The slot machine uses an optimized **5-tile object pooling** architecture for seamless infinite scrolling.
-
-#### Why 5 Tiles?
-
-Although only 3 tiles are visible on screen, we need buffer zones to achieve seamless infinite scrolling:
-
-- **Tile 0 (Top Buffer)**: Located above the visible area, ready to enter the screen
-- **Tile 1 (Visible)**: Top row (visible)
-- **Tile 2 (Visible)**: Middle row (visible)
-- **Tile 3 (Visible)**: Bottom row (visible)
-- **Tile 4 (Bottom Buffer)**: Located below the visible area, just left the screen (prevents visual glitches during fast scrolling)
-
-**Summary**: 3 reels × 5 tiles = Only 15 Sprite objects to maintain
-
-#### Object Pooling Logic
-
-Instead of generating hundreds of tiles for spinning, we reuse these 5 objects:
-
-1. **Translation**: Each frame, move all tiles downward (assuming top-to-bottom spinning)
-2. **Boundary Check**: When the bottommost Tile 4 completely exits the screen boundary
-3. **Instant Relocation**: Immediately teleport it to the top (to Tile 0's position)
-4. **Texture Swap**: Change its texture to the next required symbol
-5. **Loop**: Repeat this process, creating the visual illusion of infinite scrolling
-
-#### Visual Structure
-
-Assuming window height is 300px (each tile is 100px):
-
-```
-       [ Y: -100 ]  <-- Tile 0 (Hidden, ready to enter)
---------------------------  <-- Window Top Edge (Mask Top)
-       [ Y:   0  ]  <-- Tile 1 (Visible)
-       [ Y:  100 ]  <-- Tile 2 (Visible)
-       [ Y:  200 ]  <-- Tile 3 (Visible)
---------------------------  <-- Window Bottom Edge (Mask Bottom)
-       [ Y:  300 ]  <-- Tile 4 (Hidden, just left, ready to teleport back to top)
+  // 2. Assign a new Texture ID (Symbol)
+  tile.textureId = getNextSymbol()
+}
 ```
 
-#### Alternative Approaches Comparison
+This ensures we only ever need 5 Sprite objects per reel to simulate an infinitely long strip of potential symbols.
 
-| Approach      | Tile Count (per reel)                | Pros                      | Cons                                                                                                                            | Rating             |
-| ------------- | ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| Exactly 3     | 3                                    | Most memory efficient     | Cannot spin. Moving will create blank gaps                                                                                      | ❌ Not feasible    |
-| 4 Tiles       | 4 (1 buffer + 3 visible)             | Works                     | Logic is tight. If speed is too fast or frame drops (Lag), edge glitches are likely                                             | ⚠️ Barely usable   |
-| **5 Tiles**   | **5 (1 top + 3 visible + 1 bottom)** | **Best balance**          | -                                                                                                                               | ✅ **Recommended** |
-| Strip Texture | N/A (controlled by texture)          | Suitable for blur effects | Complex implementation, requires UV Offset or Tiling Sprite handling, difficult to animate individual symbols (e.g., win flash) | ⚠️ Advanced usage  |
+#### 3. Bounce-back Effect (GSAP Integration)
 
-#### Performance Benefits
+For the premium "mechanical feel" when the reel stops, we use **GSAP (GreenSock Animation Platform)** instead of writing custom physics implementations.
 
-- **Memory Efficient**: Only 15 Sprite objects for a 3×3 slot machine
-- **Smooth Animation**: No gaps or visual glitches even at high speeds
-- **Flexible**: Allows for bounce effects (Back.out easing) and other animations
-- **Scalable**: Easy to adjust speed without performance degradation
+- **Easing**: We use `Back.out(0.5)` to create the characteristic recoil/overshoot effect when the reel lands on the target.
+- **Implementation**: The `AnimationSystem` calculates the final resting position and delegates the tweening math to GSAP for silky smooth 60fps easing curves.
 
 ### XState State Machine
 
 The slot engine uses **XState** to manage complex state transitions, ensuring robust and maintainable state management. The state machine acts as the "brain" that controls state flow, while Pixi.js handles the physical rendering (the "muscle").
-
-#### Architecture Principle: Brain vs Muscle Separation
-
-- **XState (Brain)**: Manages state transitions and commands
-- **Pixi.js Ticker (Muscle)**: Executes physical movement (Y coordinate updates)
-- **Physical Variables**: Speed and position are kept in the class, NOT in XState context for high performance
-
-This separation ensures:
-
-- **High Performance**: No reactivity overhead from state changes affecting 60fps rendering
-- **Maintainability**: State logic is clearly defined and easy to modify
-- **Debuggability**: State transitions can be visualized and tracked
 
 #### State Flow
 
@@ -244,22 +161,6 @@ idle → accelerating → spinning → pre_stop → bounce → idle
 | `STOPPED`        | (Deprecated) Deceleration complete, reel stopped - no longer used | Pixi ticker (when `speed < MIN_SPEED`)    |
 | `ANIMATION_DONE` | Bounce animation complete                                         | Pixi ticker (after animation finishes)    |
 
-#### Guards
-
-- **`hasSpunMinDuration`**: Ensures the reel has spun for at least the minimum duration (default: 2000ms) before allowing stop. This prevents the reel from stopping too quickly and provides a better user experience.
-
-#### Context
-
-The state machine context stores:
-
-```typescript
-{
-  targetIndex: number | null,      // Target symbol index from server
-  spinStartTime: number,           // Timestamp when spinning started
-  minSpinDuration: number         // Minimum spin duration (2000ms default)
-}
-```
-
 #### Usage Example
 
 ```typescript
@@ -273,14 +174,6 @@ reel.stopSpin(resultIndex) // Sends STOP_COMMAND event
 // Physical variables (speed, position) are updated in the ticker
 // based on the current state
 ```
-
-#### Benefits of XState Integration
-
-1. **Decoupling**: Change game logic by modifying state machine config, without touching Pixi rendering code
-2. **Visualization**: Use XState Visualizer to debug state transitions
-3. **Async Handling**: Guards ensure proper timing (e.g., minimum spin duration)
-4. **Extensibility**: Easy to add new states (e.g., Free Game mode, Bonus rounds)
-5. **Type Safety**: Full TypeScript support for states, events, and context
 
 ## License
 
