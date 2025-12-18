@@ -6,7 +6,6 @@ export interface SlotConfig {
   COLUMN_SPACING: number
   SCROLL_SPEED: number
   SPIN_SPEED: number
-  TILES_PER_COLUMN: number
   STOP_DURATION: number
   ANTICIPATION_DURATION: number
   ANTICIPATION_OFFSET: number

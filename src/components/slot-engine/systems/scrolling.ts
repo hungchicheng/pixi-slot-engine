@@ -1,6 +1,7 @@
 import { Application, Texture } from 'pixi.js'
 import type { Tile } from '../view/Tile'
 import type { SlotConfig } from '../logic/types'
+import { BUFFER_COUNT } from '../logic/config'
 import { getOriginalTexture } from '@/utils/preloadAssets'
 
 export class ScrollingSystem {
@@ -60,7 +61,8 @@ export class ScrollingSystem {
     }
 
     // Recycle tiles that moved off-screen
-    const halfTiles = Math.floor(this.config.TILES_PER_COLUMN / 2)
+    const tilesPerColumn = this.config.ROWS + BUFFER_COUNT
+    const halfTiles = Math.floor(tilesPerColumn / 2)
     const unitSize = SYMBOL_SIZE + this.config.SPACING
 
     // limitY: slightly below the bottom-most resting position
@@ -127,5 +129,15 @@ export class ScrollingSystem {
     }
 
     return null
+  }
+
+  setBlur(enabled: boolean) {
+    this.tiles.forEach(tile => {
+      if (enabled) {
+        tile.blur()
+      } else {
+        tile.unblur()
+      }
+    })
   }
 }

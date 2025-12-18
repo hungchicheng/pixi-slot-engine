@@ -3,6 +3,7 @@ import { createActor } from 'xstate'
 import { Tile } from './Tile'
 import type { SlotConfig } from '../logic/types'
 import { getOriginalTexture, symbolImages } from '@/utils/preloadAssets'
+import { BUFFER_COUNT } from '../logic/config'
 import { LayoutSystem } from '../systems/layout'
 import { AnimationSystem } from '../systems/animation'
 import { ScrollingSystem } from '../systems/scrolling'
@@ -44,34 +45,23 @@ export class Reel {
   }
 
   initialize(): void {
-    const { SYMBOL_SIZE, TILES_PER_COLUMN } = this.config
+    const { SYMBOL_SIZE, ROWS, SPACING } = this.config
+    const tilesPerColumn = ROWS + BUFFER_COUNT
     const x = LayoutSystem.calculateXPosition(this.app, this.column, this.config)
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2
+    // Center index pivot (can be fractional for even rows, e.g. 2.5 for 6 tiles)
+    const centerIndex = (tilesPerColumn - 1) / 2
 
-    // Create tiles: 1 top buffer + 3 visible + 1 bottom buffer
-    for (let row = 0; row < TILES_PER_COLUMN; row++) {
+    // Create tiles: 1 top buffer + N visible + 1 bottom buffer
+    for (let row = 0; row < tilesPerColumn; row++) {
       const textureId = this.getRandomTextureId()
       const texture = getOriginalTexture(textureId) as Texture
       if (!texture) continue
 
-      let y: number
-      if (row === 0) {
-        // Top buffer: above the visible area
-        y = centerY - SYMBOL_SIZE * 2
-      } else if (row === 1) {
-        // First visible tile (top row)
-        y = centerY - SYMBOL_SIZE
-      } else if (row === 2) {
-        // Second visible tile (middle row)
-        y = centerY
-      } else if (row === 3) {
-        // Third visible tile (bottom row)
-        y = centerY + SYMBOL_SIZE
-      } else {
-        // Bottom buffer: below the visible area
-        y = centerY + SYMBOL_SIZE * 2
-      }
+      // Calculate Y position relative to center
+      // row 0 is top-most. centerIndex is the tile at the center.
+      const y = centerY + (row - centerIndex) * (SYMBOL_SIZE + SPACING)
 
       // Generate sequence number: column * 1000 + row (to ensure uniqueness)
       const sequenceNumber = this.column * 1000 + row
@@ -108,6 +98,8 @@ export class Reel {
         this.speed = this.MAX_SPEED
         // Notify state machine: speed has reached maximum
         this.stateMachine.send({ type: 'SPEED_REACHED' })
+        // Apply blur when reaching high speed
+        this.scrolling.setBlur(true)
       }
       // Execute scrolling
       this.scrolling.updateWithSpeed(this.speed)
@@ -139,6 +131,8 @@ export class Reel {
       if (!this.stopAnimation) {
         const targetIndex = currentState.context.targetIndex
         if (targetIndex !== null) {
+          // Unblur before starting stop animation
+          this.scrolling.setBlur(false)
           this.stopAnimation = new AnimationSystem(this.app, this.tiles, this.config)
           this.stopAnimation.start(this.stopOvershoot)
         }

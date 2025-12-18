@@ -12,7 +12,6 @@ const groups = {
     { key: 'SYMBOL_SIZE', label: 'Symbol Size', min: 50, max: 200, step: 10 },
     { key: 'SPACING', label: 'Tile Spacing', min: 0, max: 50, step: 1 },
     { key: 'COLUMN_SPACING', label: 'Col Spacing', min: 0, max: 100, step: 1 },
-    { key: 'TILES_PER_COLUMN', label: 'Buffer Tiles', min: 3, max: 10, step: 1 },
   ],
   Speed: [
     { key: 'SCROLL_SPEED', label: 'Scroll Speed', min: 1, max: 50, step: 1 },

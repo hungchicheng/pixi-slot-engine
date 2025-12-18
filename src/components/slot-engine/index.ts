@@ -7,6 +7,7 @@ export { GameLoop } from './core/GameLoop'
 // Logic
 export { reelMachine } from './logic/reelMachine'
 export type { ReelContext, ReelEvent } from './logic/reelMachine'
+export { SLOT_CONFIG } from './logic/config'
 
 // View
 export { SlotStage } from './view/SlotStage'
@@ -20,4 +21,3 @@ export { AnimationSystem } from './systems/animation'
 
 // Types
 export type { ReelTile as IReelTile } from './view/types'
-export type { SlotConfig } from './logic/types'

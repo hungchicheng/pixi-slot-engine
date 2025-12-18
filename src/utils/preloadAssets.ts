@@ -19,7 +19,9 @@ export interface PreloadedTextures {
  * Preload all symbol images and create blurred versions
  */
 export async function preloadSymbolImages(app: Application) {
-  const blurFilter = new BlurFilter(8)
+  const blurFilter = new BlurFilter(20)
+  blurFilter.blurX = 0
+  blurFilter.blurY = 20
 
   async function loadImage(imagePath: string, index: number) {
     const texture = await Assets.load(imagePath)

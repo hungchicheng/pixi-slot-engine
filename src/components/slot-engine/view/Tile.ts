@@ -1,5 +1,6 @@
 import { Sprite, Texture, Text, TextStyle } from 'pixi.js'
 import type { ReelTile as IReelTile } from './types'
+import { getOriginalTexture, getBlurredTexture } from '@/utils/preloadAssets'
 
 export class Tile implements IReelTile {
   sprite: Sprite
@@ -7,6 +8,9 @@ export class Tile implements IReelTile {
   column: number
   private sequenceNumber: number
   private sequenceText: Text
+  private isBlurred: boolean = false
+
+  private size: number
 
   constructor(
     texture: Texture,
@@ -17,6 +21,7 @@ export class Tile implements IReelTile {
     size: number,
     sequenceNumber: number
   ) {
+    this.size = size
     this.sprite = new Sprite(texture)
     this.sprite.anchor.set(0.5)
     this.sprite.width = size
@@ -52,8 +57,37 @@ export class Tile implements IReelTile {
   }
 
   updateTexture(texture: Texture, textureId: number) {
-    this.sprite.texture = texture
     this.textureId = textureId
+    if (this.isBlurred) {
+      const blurred = getBlurredTexture(textureId)
+      if (blurred) {
+        this.sprite.texture = blurred
+        this.sprite.height = this.size * 1.2 // Scale up to cover vertical gaps
+        return
+      }
+    }
+    this.sprite.texture = texture
+    this.sprite.height = this.size
+  }
+
+  blur() {
+    if (this.isBlurred) return
+    this.isBlurred = true
+    const blurred = getBlurredTexture(this.textureId)
+    if (blurred) {
+      this.sprite.texture = blurred
+      this.sprite.height = this.size * 1.2 // Scale up to cover vertical gaps
+    }
+  }
+
+  unblur() {
+    if (!this.isBlurred) return
+    this.isBlurred = false
+    const original = getOriginalTexture(this.textureId)
+    if (original) {
+      this.sprite.texture = original
+      this.sprite.height = this.size // Reset height
+    }
   }
 
   destroy() {
@@ -63,4 +97,3 @@ export class Tile implements IReelTile {
     this.sprite.destroy()
   }
 }
-
