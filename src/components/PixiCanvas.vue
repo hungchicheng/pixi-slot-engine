@@ -10,12 +10,21 @@ const gameStore = useGameStore()
 let app: Application | null = null
 let slotEngine: SlotEngine | null = null
 const reelStates = ref<string[]>(Array(gameStore.slotConfig.COLUMNS).fill('idle'))
+const canStop = ref(false)
 let stateInterval: ReturnType<typeof setInterval> | null = null
 
+
+const updateStates = () => {
+  if (slotEngine) {
+    reelStates.value = slotEngine.getStates()
+    canStop.value = slotEngine.canStop()
+  }
+}
 
 function startSpin() {
   if (slotEngine) {
     slotEngine.startSpin()
+    updateStates()
   }
 }
 
@@ -27,6 +36,7 @@ function stopSpin() {
       Math.floor(Math.random() * 6)
     )
     slotEngine.stopSpin(resultIndices)
+    updateStates()
   }
 }
 
@@ -58,29 +68,9 @@ const handleMounted = async () => {
     }
   }, { deep: true })
 
-  const updateStates = () => {
-    if (slotEngine) {
-      reelStates.value = slotEngine.getStates()
-    }
-  }
-
   stateInterval = setInterval(updateStates, 100)
 
-  const getStatus = () => {
-    return gameStore.status
-  }
 
-  const handleStatusChange = (status: 'Running' | 'Paused') => {
-    if (slotEngine) {
-      if (status === 'Paused') {
-        slotEngine.pause()
-      } else {
-        slotEngine.resume()
-      }
-    }
-  }
-
-  watch(getStatus, handleStatusChange)
 
   const handleResize = () => {
     if (app && canvasRef.value && slotEngine) {
@@ -118,6 +108,7 @@ defineExpose({
   startSpin,
   stopSpin,
   reelStates,
+  canStop,
 })
 
 onUnmounted(handleUnmounted)

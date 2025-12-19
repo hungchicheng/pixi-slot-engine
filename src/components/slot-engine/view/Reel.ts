@@ -158,6 +158,17 @@ export class Reel {
     return this.stateMachine.getSnapshot().value as string
   }
 
+  canStop(): boolean {
+    const snapshot = this.stateMachine.getSnapshot()
+    // Manual check of the guard logic 'hasSpunMinDuration' logic
+    // We could try using snapshot.can(), but 'STOP_COMMAND' requires a dummy payload
+    const ctx = snapshot.context
+    if (ctx.spinStartTime === 0) return false
+
+    const elapsed = Date.now() - ctx.spinStartTime
+    return elapsed >= ctx.minSpinDuration
+  }
+
   destroy(): void {
     // Stop the state machine
     this.stateMachine.stop()

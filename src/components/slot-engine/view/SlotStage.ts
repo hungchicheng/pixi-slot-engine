@@ -107,6 +107,11 @@ export class SlotStage {
     return this.reels.map(reel => reel.getState())
   }
 
+  canStop(): boolean {
+    // Return true if ALL reels are ready to stop
+    return this.reels.every(reel => reel.canStop())
+  }
+
   destroy() {
     this.reels.forEach(reel => {
       reel.destroy()

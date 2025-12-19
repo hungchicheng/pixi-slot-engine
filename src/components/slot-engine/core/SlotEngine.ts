@@ -89,6 +89,10 @@ export class SlotEngine {
     return this.slotStage.getStates()
   }
 
+  canStop(): boolean {
+    return this.slotStage.canStop()
+  }
+
   destroy() {
     this.gameLoop.stop()
     this.slotStage.destroy()

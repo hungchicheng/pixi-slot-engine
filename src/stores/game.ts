@@ -5,15 +5,10 @@ import { SLOT_CONFIG } from '../components/slot-engine'
 const defaultSlotConfig = SLOT_CONFIG
 
 export const useGameStore = defineStore('game', () => {
-  const status = ref<'Running' | 'Paused'>('Running')
   const score = ref<number>(0)
   const slotConfig = reactive<typeof SLOT_CONFIG>({
     ...defaultSlotConfig,
   })
-
-  function toggleStatus() {
-    status.value = status.value === 'Running' ? 'Paused' : 'Running'
-  }
 
   function incrementScore() {
     score.value++
@@ -32,10 +27,9 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    status,
     score,
     slotConfig,
-    toggleStatus,
+
     incrementScore,
     resetScore,
     updateSlotConfig,
