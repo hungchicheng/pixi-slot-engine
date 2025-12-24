@@ -18,6 +18,9 @@ export { Tile } from './view/Tile'
 export { ScrollingSystem } from './systems/scrolling'
 export { LayoutSystem } from './systems/layout'
 export { AnimationSystem } from './systems/animation'
+export { WinDetectionSystem } from './systems/winDetection'
+export { WinLineSystem } from './systems/winLine'
+export type { WinningLine } from './systems/winDetection'
 
 // Types
 export type { ReelTile as IReelTile } from './view/types'

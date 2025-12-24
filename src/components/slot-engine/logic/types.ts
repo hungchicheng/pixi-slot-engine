@@ -13,4 +13,6 @@ export interface SlotConfig {
   IMPACT_OFFSET: number
   RECOVER_DURATION: number
   START_DELAY: number
+  WILD_SYMBOL_ID: number
+  LINE_DISPLAY_DURATION: number
 }

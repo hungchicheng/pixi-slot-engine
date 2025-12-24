@@ -62,6 +62,21 @@ export class Tile implements IReelTile {
     }
   }
 
+  /**
+   * Apply tint to darken the tile (for non-winning symbols)
+   * @param tint - Tint value (0x000000 = black/dark, 0xffffff = no tint)
+   */
+  setTint(tint: number = 0x666666): void {
+    this.sprite.tint = tint
+  }
+
+  /**
+   * Reset tint to normal (white = no tint)
+   */
+  resetTint(): void {
+    this.sprite.tint = 0xffffff
+  }
+
   destroy() {
     this.sprite.destroy()
   }

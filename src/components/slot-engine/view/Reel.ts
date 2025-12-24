@@ -169,6 +169,46 @@ export class Reel {
     return elapsed >= ctx.minSpinDuration
   }
 
+  /**
+   * Get center symbols (visible row symbols) for win detection
+   * Returns array of textureIds for each visible row
+   */
+  getCenterSymbols(rows: number): number[] {
+    const { SYMBOL_SIZE, SPACING } = this.config
+    const screenHeight = this.app.screen.height
+    const centerY = screenHeight / 2
+
+    const symbols: number[] = []
+
+    // Get symbols for each visible row
+    for (let row = 0; row < rows; row++) {
+      const targetY = centerY + (row - (rows - 1) / 2) * (SYMBOL_SIZE + SPACING)
+
+      // Find the tile closest to target Y position
+      let closestTile = this.tiles[0]
+      let minDist = Math.abs(this.tiles[0].sprite.y - targetY)
+
+      for (const tile of this.tiles) {
+        const dist = Math.abs(tile.sprite.y - targetY)
+        if (dist < minDist) {
+          minDist = dist
+          closestTile = tile
+        }
+      }
+
+      symbols.push(closestTile.textureId)
+    }
+
+    return symbols
+  }
+
+  /**
+   * Get all tiles
+   */
+  getTiles(): Tile[] {
+    return this.tiles
+  }
+
   destroy(): void {
     // Stop the state machine
     this.stateMachine.stop()

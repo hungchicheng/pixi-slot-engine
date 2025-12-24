@@ -52,8 +52,8 @@ onUnmounted(() => {
 
 const groups = {
   Layout: [
-    { key: 'COLUMNS', label: 'Columns', min: 1, max: 10, step: 1 },
-    { key: 'ROWS', label: 'Rows', min: 1, max: 10, step: 1 },
+    { key: 'COLUMNS', label: 'Columns', min: 3, max: 10, step: 1 },
+    { key: 'ROWS', label: 'Rows', min: 3, max: 10, step: 1 },
     { key: 'SYMBOL_SIZE', label: 'Symbol Size', min: 50, max: 200, step: 10 },
     { key: 'SPACING', label: 'Tile Spacing', min: 0, max: 50, step: 1 },
     { key: 'COLUMN_SPACING', label: 'Col Spacing', min: 0, max: 100, step: 1 },
@@ -69,6 +69,7 @@ const groups = {
     { key: 'IMPACT_DURATION', label: 'Impact Time', min: 0, max: 1000, step: 10 },
     { key: 'IMPACT_OFFSET', label: 'Impact Dist', min: 0, max: 200, step: 10 },
     { key: 'RECOVER_DURATION', label: 'Recover Time', min: 0, max: 1000, step: 50 },
+    { key: 'LINE_DISPLAY_DURATION', label: 'Line Display Time', min: 500, max: 5000, step: 100 },
   ],
 } as const
 </script>
