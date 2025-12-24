@@ -4,6 +4,7 @@ import { Application, Cache } from 'pixi.js'
 import { useGameStore } from '../stores/game'
 import { preloadSymbolImages, clearSymbolCache } from '@/utils/preloadAssets'
 import { SlotEngine } from './slot-engine'
+import Stats from 'stats.js'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
@@ -12,6 +13,7 @@ let slotEngine: SlotEngine | null = null
 const reelStates = ref<string[]>(Array(gameStore.slotConfig.COLUMNS).fill('idle'))
 const canStop = ref(false)
 let stateInterval: ReturnType<typeof setInterval> | null = null
+let stats: Stats | null = null
 
 
 const updateStates = () => {
@@ -62,6 +64,23 @@ const handleMounted = async () => {
   slotEngine = new SlotEngine(app, gameStore.slotConfig)
   await slotEngine.initialize()
 
+  // Initialize Stats.js for FPS monitoring
+  stats = new Stats()
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb
+  stats.dom.style.position = 'fixed'
+  stats.dom.style.top = 'auto'
+  stats.dom.style.bottom = '0'
+  stats.dom.style.left = '0'
+  stats.dom.style.zIndex = '1000'
+  document.body.appendChild(stats.dom)
+
+  // Update stats in ticker
+  app.ticker.add(() => {
+    if (stats) {
+      stats.update()
+    }
+  })
+
   watch(() => gameStore.slotConfig, (newConfig) => {
     if (slotEngine) {
       slotEngine.updateConfig(newConfig)
@@ -89,6 +108,12 @@ const handleUnmounted = () => {
   if (stateInterval) {
     clearInterval(stateInterval)
     stateInterval = null
+  }
+
+  // Remove Stats.js
+  if (stats && stats.dom && stats.dom.parentNode) {
+    stats.dom.parentNode.removeChild(stats.dom)
+    stats = null
   }
   
   if (slotEngine) {
