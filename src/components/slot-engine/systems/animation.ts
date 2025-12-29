@@ -2,6 +2,7 @@ import { Application } from 'pixi.js'
 import { Back } from 'gsap'
 import type { Tile } from '../view/Tile'
 import type { SlotConfig } from '../logic/types'
+import type { TileWithInitialY } from '../view/types'
 
 export class AnimationSystem {
   private stopStartY: number = 0
@@ -25,7 +26,7 @@ export class AnimationSystem {
     this.stopStartTime = Date.now()
 
     this.tiles.forEach(tile => {
-      ;(tile as any).initialY = tile.sprite.y
+      (tile as TileWithInitialY).initialY = tile.sprite.y
     })
   }
 
@@ -40,13 +41,11 @@ export class AnimationSystem {
     } else if (elapsed <= IMPACT_DURATION + RECOVER_DURATION) {
       const recoverElapsed = elapsed - IMPACT_DURATION
       const progress = recoverElapsed / RECOVER_DURATION
-      // Use Back.out easing function
       const easedProgress = Back.easeOut.config(0.5)(progress)
       const currentOffset = this.stopTargetY * (1 - easedProgress)
 
       this.applyOffset(currentOffset)
     } else {
-      // Ensure we land exactly on the target (offset 0 relative to logical center)
       this.applyOffset(0)
       this.finalize()
       return true
@@ -57,7 +56,7 @@ export class AnimationSystem {
 
   private applyOffset(offset: number): void {
     this.tiles.forEach(tile => {
-      const initialY = (tile as any).initialY
+      const initialY = (tile as TileWithInitialY).initialY
       if (initialY !== undefined) {
         tile.sprite.y = initialY - this.stopStartY + offset
       }
@@ -65,18 +64,15 @@ export class AnimationSystem {
   }
 
   private finalize(): void {
-    // 1. Cleanup state
     this.tiles.forEach(tile => {
-      delete (tile as any).initialY
+      delete (tile as TileWithInitialY).initialY
     })
 
-    // Rebalance tiles to ensure proper buffer distribution
     const { SYMBOL_SIZE, SPACING } = this.config
     const centerY = this.app.screen.height / 2
 
     this.tiles.sort((a, b) => a.sprite.y - b.sprite.y)
 
-    // Find the tile closest to center
     let closestTile = this.tiles[0]
     let minDiff = Math.abs(closestTile.sprite.y - centerY)
 
@@ -92,7 +88,6 @@ export class AnimationSystem {
     const expectedIndex = Math.floor(this.tiles.length / 2)
 
     if (centerIndex < expectedIndex) {
-      // Shift Down
       const diff = expectedIndex - centerIndex
       for (let i = 0; i < diff; i++) {
         const t = this.tiles.pop()
@@ -102,7 +97,6 @@ export class AnimationSystem {
         }
       }
     } else if (centerIndex > expectedIndex) {
-      // Shift Up
       const diff = centerIndex - expectedIndex
       for (let i = 0; i < diff; i++) {
         const t = this.tiles.shift()

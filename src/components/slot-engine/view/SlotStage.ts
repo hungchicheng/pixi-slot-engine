@@ -90,7 +90,6 @@ export class SlotStage {
         ) {
           this.reels[this.currentStopIndex].stopSpin(this.resultIndices[this.currentStopIndex])
         } else {
-          // All reels stopped, stop spinning sound and play stop sound
           if (this.soundPlayer && this.spinningSoundId !== null) {
             this.soundPlayer.stop('spinning', this.spinningSoundId)
             this.spinningSoundId = null
@@ -121,7 +120,7 @@ export class SlotStage {
     if (this.soundPlayer) {
       this.spinningSoundId = this.soundPlayer.play('spinning', { loop: true })
     }
-
+    
     this.reels.forEach(reel => {
       reel.startSpin()
     })

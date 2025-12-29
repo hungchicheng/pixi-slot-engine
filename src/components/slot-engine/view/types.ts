@@ -6,3 +6,11 @@ export interface ReelTile {
   column: number
 }
 
+export interface TileWithInitialY extends ReelTile {
+  initialY?: number
+}
+
+export interface TileWithTarget extends ReelTile {
+  isTarget?: boolean
+}
+

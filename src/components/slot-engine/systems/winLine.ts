@@ -49,7 +49,7 @@ export class WinLineSystem {
 
     if (this.activeLines.length > 1) {
       this.animationTimer = window.setInterval(() => {
-        if (!this.graphics || this.graphics.destroyed) {
+        if (!this.isGraphicsValid()) {
           this.stopAnimation()
           return
         }
@@ -57,6 +57,10 @@ export class WinLineSystem {
         this.drawCurrentLine()
       }, this.config.LINE_DISPLAY_DURATION)
     }
+  }
+
+  private isGraphicsValid(): boolean {
+    return this.graphics !== null && !this.graphics.destroyed
   }
 
   private stopAnimation(): void {
@@ -74,7 +78,7 @@ export class WinLineSystem {
   }
 
   private drawCurrentLine(): void {
-    if (!this.graphics || this.graphics.destroyed) {
+    if (!this.isGraphicsValid()) {
       return
     }
 
@@ -149,7 +153,7 @@ export class WinLineSystem {
   clearLines(): void {
     this.stopAnimation()
     
-    if (this.graphics && !this.graphics.destroyed) {
+    if (this.isGraphicsValid()) {
       this.graphics.clear()
     }
     
@@ -158,7 +162,7 @@ export class WinLineSystem {
   }
 
   updateLines(): void {
-    if (!this.graphics || this.graphics.destroyed) {
+    if (!this.isGraphicsValid()) {
       return
     }
     
@@ -170,9 +174,9 @@ export class WinLineSystem {
   destroy(): void {
     this.stopAnimation()
     
-    if (this.graphics && !this.graphics.destroyed) {
+    if (this.isGraphicsValid()) {
       this.graphics.clear()
-      if (this.container && this.graphics.parent === this.container) {
+      if (this.graphics.parent === this.container) {
         this.container.removeChild(this.graphics)
       }
       this.graphics.destroy()

@@ -3,12 +3,11 @@ import { setup, assign } from 'xstate'
 /**
  * Reel State Machine
  * Manages state transitions (idle -> accelerating -> spinning -> pre_stop -> bounce -> idle)
- * Physical movement is handled by Pixi Ticker.
  */
 export interface ReelContext {
-  targetIndex: number | null // Target symbol index from server
-  spinStartTime: number // Timestamp when spinning started
-  minSpinDuration: number // Minimum spin duration (ensures at least a certain amount of time)
+  targetIndex: number | null
+  spinStartTime: number
+  minSpinDuration: number
 }
 
 export type ReelEvent =
@@ -25,7 +24,6 @@ export const reelMachine = setup({
     events: {} as ReelEvent,
   },
   guards: {
-    // Ensure minimum spin duration before allowing stop
     hasSpunMinDuration: ({ context }) => {
       if (context.spinStartTime === 0) return false
       const elapsed = Date.now() - context.spinStartTime
@@ -36,7 +34,6 @@ export const reelMachine = setup({
     recordSpinStart: assign({
       spinStartTime: () => Date.now(),
     }),
-    // Update target index
     setTargetIndex: assign({
       targetIndex: ({ event }) => {
         if (event.type === 'STOP_COMMAND') {
@@ -52,7 +49,7 @@ export const reelMachine = setup({
   context: {
     targetIndex: null,
     spinStartTime: 0,
-    minSpinDuration: 2000, // Minimum spin duration: 2 seconds
+    minSpinDuration: 2000,
   },
   states: {
     idle: {

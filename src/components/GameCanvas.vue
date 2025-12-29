@@ -48,7 +48,6 @@ function startSpin() {
 
 function stopSpin() {
   if (slotEngine) {
-    // Generate random result indices (0-5 for each column) based on current config
     const { COLUMNS } = slotEngine.getConfig()
     const resultIndices = Array.from({ length: COLUMNS }, () =>
       Math.floor(Math.random() * 6)
@@ -82,7 +81,7 @@ const handleMounted = async () => {
   await slotEngine.initialize()
 
   stats = new Stats()
-  stats.showPanel(0) // 0: fps, 1: ms, 2: mb
+  stats.showPanel(0)
   stats.dom.style.position = 'fixed'
   stats.dom.style.top = 'auto'
   stats.dom.style.bottom = '0'

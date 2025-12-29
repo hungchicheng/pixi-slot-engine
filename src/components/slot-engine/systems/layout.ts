@@ -37,7 +37,6 @@ export class LayoutSystem {
       } else if (index === 3) {
         tile.sprite.y = centerY + SYMBOL_SIZE
       } else {
-        // Bottom buffer
         tile.sprite.y = centerY + SYMBOL_SIZE * 2
       }
     })

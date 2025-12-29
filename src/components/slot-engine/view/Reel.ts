@@ -18,7 +18,7 @@ export class Reel {
   private stopAnimation: AnimationSystem | null = null
   private scrolling: ScrollingSystem
   private config: SlotConfig
-  private _soundPlayer: SoundPlayer | null // Reserved for future use (e.g., reel-specific sounds)
+  private _soundPlayer: SoundPlayer | null
 
   private stateMachine = createActor(reelMachine)
 
@@ -67,9 +67,7 @@ export class Reel {
     const { SYMBOL_SIZE, ROWS, SPACING } = this.config
     const tilesPerColumn = ROWS + BUFFER_COUNT
     const x = LayoutSystem.calculateXPosition(this.app, this.column, this.config)
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-    // Center index pivot (can be fractional for even rows, e.g. 2.5 for 6 tiles)
+    const centerY = this.app.screen.height / 2
     const centerIndex = (tilesPerColumn - 1) / 2
 
     // Create tiles: 1 top buffer + N visible + 1 bottom buffer
@@ -81,7 +79,6 @@ export class Reel {
       // Calculate Y position relative to center
       // row 0 is top-most. centerIndex is the tile at the center.
       const y = centerY + (row - centerIndex) * (SYMBOL_SIZE + SPACING)
-
       const tile = new Tile(texture, textureId, this.column, x, y, SYMBOL_SIZE)
       this.tiles.push(tile)
       this.container.addChild(tile.sprite)
@@ -95,8 +92,6 @@ export class Reel {
   }
 
   stopSpin(resultIndex: number): void {
-    // Send STOP_COMMAND event to state machine
-    // State machine will check Guard (e.g., minimum spin duration) to decide whether to accept
     this.stateMachine.send({ type: 'STOP_COMMAND', resultIndex })
   }
 
@@ -221,7 +216,6 @@ export class Reel {
   }
 
   destroy(): void {
-    // Stop the state machine
     this.stateMachine.stop()
 
     this.tiles.forEach(tile => {

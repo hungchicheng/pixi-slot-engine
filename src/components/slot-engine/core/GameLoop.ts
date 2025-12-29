@@ -17,7 +17,7 @@ export class GameLoop {
     
     const animate = (currentTime: number) => {
       if (!this.isPaused) {
-        const delta = (currentTime - lastTime) / 16.67 // Normalize to 60fps delta
+        const delta = (currentTime - lastTime) / 16.67 // 60FPS
         this.slotStage.update(delta)
       }
       lastTime = currentTime
