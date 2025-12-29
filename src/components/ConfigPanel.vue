@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 import { useGameStore } from '../stores/game'
+import { soundManager } from '@/utils/soundManager'
 
 const gameStore = useGameStore()
 const isOpen = ref(true)
@@ -80,7 +81,7 @@ const groups = {
       <!-- Collapsed State: Side Button -->
       <button 
         v-if="!isOpen"
-        @click="isOpen = true"
+        @click="soundManager.play('button-press'); isOpen = true"
         class="fixed right-0 top-1/4 z-50 bg-gray-900/90 text-yellow-500 p-3 rounded-l-xl shadow-xl border-y border-l border-yellow-500/30 hover:bg-gray-800 transition-all hover:pr-4 group"
         title="Open Config"
       >
@@ -105,13 +106,13 @@ const groups = {
           </div>
           <div class="flex items-center gap-2">
             <button 
-              @click="gameStore.resetSlotConfig"
+              @click="soundManager.play('button-press'); gameStore.resetSlotConfig()"
               class="text-[10px] px-2 py-0.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded transition-colors uppercase tracking-wider"
             >
               Reset
             </button>
             <button 
-              @click="isOpen = false"
+              @click="soundManager.play('button-press'); isOpen = false"
               class="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
               title="Minimize"
             >

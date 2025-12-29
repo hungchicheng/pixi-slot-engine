@@ -3,6 +3,7 @@ import { Reel } from './Reel'
 import type { SlotConfig } from '../logic/types'
 import { WinDetectionSystem, type WinningLine } from '../systems/winDetection'
 import { WinLineSystem } from '../systems/winLine'
+import type { SoundPlayer } from '../logic/soundPlayer'
 
 export class SlotStage {
   private app: Application
@@ -14,11 +15,14 @@ export class SlotStage {
   private winLineSystem: WinLineSystem
   private currentWinningLines: WinningLine[] = []
   private lastWinCheckState: string = ''
+  private soundPlayer: SoundPlayer | null
+  private spinningSoundId: number | null = null
 
-  constructor(app: Application, container: Container, config: SlotConfig) {
+  constructor(app: Application, container: Container, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
     this.container = container
     this.config = { ...config }
+    this.soundPlayer = soundPlayer || null
     this.winLineSystem = new WinLineSystem(app, container, config)
     
     this.winLineSystem.setOnLineChangeCallback((currentLine) => {
@@ -55,9 +59,14 @@ export class SlotStage {
     }
   }
 
+  setSoundPlayer(soundPlayer: SoundPlayer | null): void {
+    this.soundPlayer = soundPlayer
+    this.reels.forEach(reel => reel.setSoundPlayer(soundPlayer))
+  }
+
   initialize() {
     for (let col = 0; col < this.config.COLUMNS; col++) {
-      const reel = new Reel(this.app, this.container, col, this.config)
+      const reel = new Reel(this.app, this.container, col, this.config, this.soundPlayer || undefined)
       reel.initialize()
       this.reels.push(reel)
     }
@@ -81,6 +90,14 @@ export class SlotStage {
         ) {
           this.reels[this.currentStopIndex].stopSpin(this.resultIndices[this.currentStopIndex])
         } else {
+          // All reels stopped, stop spinning sound and play stop sound
+          if (this.soundPlayer && this.spinningSoundId !== null) {
+            this.soundPlayer.stop('spinning', this.spinningSoundId)
+            this.spinningSoundId = null
+          }
+          if (this.soundPlayer) {
+            this.soundPlayer.play('spin-stop')
+          }
           this.checkAndDisplayWins()
           this.currentStopIndex = -1
           this.resultIndices = []
@@ -103,6 +120,11 @@ export class SlotStage {
     this.lastWinCheckState = ''
 
     this.clearWinEffects()
+
+    // Start spinning sound
+    if (this.soundPlayer) {
+      this.spinningSoundId = this.soundPlayer.play('spinning', { loop: true })
+    }
 
     this.reels.forEach(reel => {
       reel.startSpin()

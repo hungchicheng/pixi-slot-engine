@@ -24,3 +24,4 @@ export type { WinningLine } from './systems/winDetection'
 
 // Types
 export type { ReelTile as IReelTile } from './view/types'
+export type { SoundPlayer } from './logic/soundPlayer'

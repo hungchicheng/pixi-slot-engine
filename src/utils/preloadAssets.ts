@@ -1,4 +1,5 @@
 import { Application, Assets, Sprite, BlurFilter, Cache, Texture, RenderTexture } from 'pixi.js'
+import { soundManager } from './soundManager'
 
 // Import images
 import symbol1 from '@/assets/images/slot-engine/symbol-1.png'
@@ -7,6 +8,11 @@ import symbol3 from '@/assets/images/slot-engine/symbol-3.png'
 import symbol4 from '@/assets/images/slot-engine/symbol-4.png'
 import symbol5 from '@/assets/images/slot-engine/symbol-5.png'
 import symbol6 from '@/assets/images/slot-engine/symbol-6.png'
+
+// Import audio files
+import spinningAudio from '@/assets/audio/spinning.mp3'
+import buttonPressAudio from '@/assets/audio/button-press.mp3'
+import spinStopAudio from '@/assets/audio/spin-stop.mp3'
 
 export const symbolImages = [symbol1, symbol2, symbol3, symbol4, symbol5, symbol6]
 
@@ -76,4 +82,35 @@ export function clearSymbolCache() {
   }
 
   symbolImages.forEach(removeCache)
+}
+
+export async function preloadSounds() {
+  soundManager.register({
+    id: 'spinning',
+    src: spinningAudio,
+    volume: 0.5,
+    loop: true,
+  })
+
+  soundManager.register({
+    id: 'button-press',
+    src: buttonPressAudio,
+    volume: 0.6,
+  })
+
+  soundManager.register({
+    id: 'spin-stop',
+    src: spinStopAudio,
+    volume: 0.7,
+  })
+
+  console.log('All sounds preloaded and registered')
+}
+
+export async function preloadAllAssets(app: Application) {
+  await Promise.all([
+    preloadSymbolImages(app),
+    preloadSounds(),
+  ])
+  console.log('All assets preloaded')
 }

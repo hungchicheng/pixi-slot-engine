@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, provide } from 'vue'
-import PixiCanvas from '../components/PixiCanvas.vue'
+import GameCanvas from '../components/GameCanvas.vue'
 import SlotControls from '../components/SlotControls.vue'
 import ConfigPanel from '../components/ConfigPanel.vue'
 import GitHubCorner from '../components/GitHubCorner.vue'
 
-const pixiCanvasRef = ref<InstanceType<typeof PixiCanvas> | null>(null)
-provide('pixiCanvasRef', pixiCanvasRef)
+const gameCanvasRef = ref<InstanceType<typeof GameCanvas> | null>(null)
+provide('gameCanvasRef', gameCanvasRef)
 </script>
 
 <template>
@@ -21,7 +21,7 @@ provide('pixiCanvasRef', pixiCanvasRef)
     
     <main class="flex-1 flex items-center justify-center p-4">
       <div class="w-full max-w-4xl">
-        <PixiCanvas ref="pixiCanvasRef" />
+        <GameCanvas ref="gameCanvasRef" />
       </div>
     </main>
     

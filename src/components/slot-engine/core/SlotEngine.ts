@@ -2,6 +2,7 @@ import { Application, Container, Graphics } from 'pixi.js'
 import { SlotStage } from '../view/SlotStage'
 import { GameLoop } from './GameLoop'
 import type { SlotConfig } from '../logic/types'
+import type { SoundPlayer } from '../logic/soundPlayer'
 
 export class SlotEngine {
   private app: Application
@@ -10,10 +11,12 @@ export class SlotEngine {
   private slotStage: SlotStage
   private gameLoop: GameLoop
   private config: SlotConfig
+  private soundPlayer: SoundPlayer | null
 
-  constructor(app: Application, config: SlotConfig) {
+  constructor(app: Application, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
     this.config = config
+    this.soundPlayer = soundPlayer || null
     this.container = new Container()
     this.app.stage.addChild(this.container)
 
@@ -21,7 +24,7 @@ export class SlotEngine {
     this.container.mask = this.mask
     this.app.stage.addChild(this.mask)
 
-    this.slotStage = new SlotStage(this.app, this.container, config)
+    this.slotStage = new SlotStage(this.app, this.container, config, this.soundPlayer || undefined)
     this.gameLoop = new GameLoop(this.app, this.slotStage)
   }
 

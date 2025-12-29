@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { useGameStore } from '../stores/game'
-import type PixiCanvas from './PixiCanvas.vue'
+import { soundManager } from '@/utils/soundManager'
+import type GameCanvas from './GameCanvas.vue'
 
 const gameStore = useGameStore()
-const pixiCanvasRef = inject<{ 
-  value: InstanceType<typeof PixiCanvas> | null 
-}>('pixiCanvasRef')
+const gameCanvasRef = inject<{ 
+  value: InstanceType<typeof GameCanvas> | null 
+}>('gameCanvasRef')
 
 const reelStates = computed(() => {
-  return pixiCanvasRef?.value?.reelStates || Array(gameStore.slotConfig.COLUMNS).fill('idle')
+  return gameCanvasRef?.value?.reelStates || Array(gameStore.slotConfig.COLUMNS).fill('idle')
 })
 
 const canStop = computed(() => {
-  return pixiCanvasRef?.value?.canStop ?? false
+  return gameCanvasRef?.value?.canStop ?? false
 })
 
 const statesDisplay = computed(() => {
@@ -29,22 +30,24 @@ const isStopping = computed(() => {
 })
 
 function handleStartSpin() {
-  if (pixiCanvasRef?.value) {
-    pixiCanvasRef.value.startSpin()
+  soundManager.play('button-press')
+  if (gameCanvasRef?.value) {
+    gameCanvasRef.value.startSpin()
   }
 }
 
 function handleStopSpin() {
-  if (pixiCanvasRef?.value) {
-    pixiCanvasRef.value.stopSpin()
+  soundManager.play('button-press')
+  if (gameCanvasRef?.value) {
+    gameCanvasRef.value.stopSpin()
   }
 }
 </script>
 
 <template>
-  <div class="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700 p-4">
+  <div class="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700 p-4 h-32">
     <div class="text-center text-gray-400 text-sm">
-      <p class="mt-2 text-yellow-400 font-mono text-xs">
+      <p class="mt-2 text-yellow-400 font-mono text-xs whitespace-nowrap overflow-x-auto">
         XState: {{ statesDisplay }}
       </p>
       <div class="mt-4 flex gap-4 justify-center">

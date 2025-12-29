@@ -8,6 +8,7 @@ import { LayoutSystem } from '../systems/layout'
 import { AnimationSystem } from '../systems/animation'
 import { ScrollingSystem } from '../systems/scrolling'
 import { reelMachine } from '../logic/reelMachine'
+import type { SoundPlayer } from '../logic/soundPlayer'
 
 export class Reel {
   private app: Application
@@ -17,6 +18,7 @@ export class Reel {
   private stopAnimation: AnimationSystem | null = null
   private scrolling: ScrollingSystem
   private config: SlotConfig
+  private _soundPlayer: SoundPlayer | null // Reserved for future use (e.g., reel-specific sounds)
 
   private stateMachine = createActor(reelMachine)
 
@@ -29,14 +31,23 @@ export class Reel {
   private preStopCalculated: boolean = false
   private stopOvershoot: number = 0
 
-  constructor(app: Application, container: Container, column: number, config: SlotConfig) {
+  constructor(app: Application, container: Container, column: number, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
     this.container = container
     this.column = column
     this.config = config
+    this._soundPlayer = soundPlayer || null
     this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId(), config)
 
     this.stateMachine.start()
+  }
+
+  setSoundPlayer(soundPlayer: SoundPlayer | null): void {
+    this._soundPlayer = soundPlayer
+  }
+
+  getSoundPlayer(): SoundPlayer | null {
+    return this._soundPlayer
   }
 
   updateConfig(config: SlotConfig) {

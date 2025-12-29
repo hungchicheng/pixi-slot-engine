@@ -2,9 +2,25 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Application, Cache } from 'pixi.js'
 import { useGameStore } from '../stores/game'
-import { preloadSymbolImages, clearSymbolCache } from '@/utils/preloadAssets'
+import { preloadAllAssets, clearSymbolCache } from '@/utils/preloadAssets'
 import { SlotEngine } from './slot-engine'
+import type { SoundPlayer } from './slot-engine'
+import { soundManager } from '@/utils/soundManager'
 import Stats from 'stats.js'
+
+function createSoundPlayerAdapter(manager: typeof soundManager): SoundPlayer {
+  return {
+    play(id: string, options?: { volume?: number; loop?: boolean }): number | null {
+      return manager.play(id, options)
+    },
+    stop(id: string, soundId?: number): void {
+      manager.stop(id, soundId)
+    },
+    isPlaying(id: string, soundId?: number): boolean {
+      return manager.isPlaying(id, soundId)
+    },
+  }
+}
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const gameStore = useGameStore()
@@ -59,12 +75,12 @@ const handleMounted = async () => {
     ;(window as any).__PIXI_APP__ = app
   }
 
-  await preloadSymbolImages(app)
+  await preloadAllAssets(app)
 
-  slotEngine = new SlotEngine(app, gameStore.slotConfig)
+  const soundPlayer = createSoundPlayerAdapter(soundManager)
+  slotEngine = new SlotEngine(app, gameStore.slotConfig, soundPlayer)
   await slotEngine.initialize()
 
-  // Initialize Stats.js for FPS monitoring
   stats = new Stats()
   stats.showPanel(0) // 0: fps, 1: ms, 2: mb
   stats.dom.style.position = 'fixed'
@@ -74,7 +90,6 @@ const handleMounted = async () => {
   stats.dom.style.zIndex = '1000'
   document.body.appendChild(stats.dom)
 
-  // Update stats in ticker
   app.ticker.add(() => {
     if (stats) {
       stats.update()
@@ -104,13 +119,11 @@ const handleMounted = async () => {
 onMounted(handleMounted)
 
 const handleUnmounted = () => {
-  // Clear state update interval
   if (stateInterval) {
     clearInterval(stateInterval)
     stateInterval = null
   }
 
-  // Remove Stats.js
   if (stats && stats.dom && stats.dom.parentNode) {
     stats.dom.parentNode.removeChild(stats.dom)
     stats = null
@@ -120,6 +133,9 @@ const handleUnmounted = () => {
     slotEngine.destroy()
     slotEngine = null
   }
+  
+  soundManager.stopAll()
+  
   if (app) {
     clearSymbolCache()
     Cache.reset()
@@ -128,7 +144,6 @@ const handleUnmounted = () => {
   }
 }
 
-// Expose methods and states for parent component
 defineExpose({
   startSpin,
   stopSpin,

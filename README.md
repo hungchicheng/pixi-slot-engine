@@ -13,6 +13,8 @@ A modern project built with Pixi.js + Vue 3 + Pinia + Tailwind CSS.
 - **TypeScript** - Type-safe JavaScript superset
 - **Pinia** - Vue state management library
 - **XState** - State machine library for complex state management
+- **Howler.js** - Web audio library for sound management
+- **GSAP** - Animation library for smooth easing effects
 - **Tailwind CSS** - Utility-first CSS framework
 - **Vite** - Next-generation frontend build tool
 - **pnpm** - Fast, disk space efficient package manager
@@ -32,7 +34,8 @@ pnpm build
 slotEngine/
 ├── src/
 │   ├── assets/          # Static assets
-│   │   └── images/      # Image files
+│   │   ├── images/      # Image files
+│   │   └── audio/       # Audio files
 │   ├── components/      # Vue components
 │   │   ├── slot-engine/  # Slot engine core
 │   │   │   ├── core/    # Core engine (skeleton)
@@ -41,22 +44,31 @@ slotEngine/
 │   │   │   ├── logic/   # Brain (Logic layer)
 │   │   │   │   ├── config.ts        # Slot configuration
 │   │   │   │   ├── reelMachine.ts   # XState state machine
+│   │   │   │   ├── soundPlayer.ts   # Sound player interface
 │   │   │   │   └── types.ts         # Logic type definitions
 │   │   │   ├── systems/ # Behavior systems
 │   │   │   │   ├── scrolling.ts     # Y-axis movement & tile reuse logic
 │   │   │   │   ├── layout.ts        # Initial position calculations
-│   │   │   │   └── animation.ts     # Bounce animation formulas
+│   │   │   │   ├── animation.ts     # Bounce animation formulas
+│   │   │   │   ├── winDetection.ts  # Win detection algorithm
+│   │   │   │   └── winLine.ts       # Win line drawing system
 │   │   │   ├── view/    # Muscle (View layer - Pixi components)
-│   │   │   │   ├── SlotStage.ts     # Main slot stage (manages 3 reels)
+│   │   │   │   ├── SlotStage.ts     # Main slot stage (manages reels)
 │   │   │   │   ├── Reel.ts          # Single reel container
-│   │   │   │   ├── Tile.ts           # Single symbol sprite
-│   │   │   │   └── types.ts          # View type definitions
+│   │   │   │   ├── Tile.ts          # Single symbol sprite
+│   │   │   │   └── types.ts         # View type definitions
 │   │   │   └── index.ts             # Engine exports
-│   │   └── PixiCanvas.vue
+│   │   ├── GameCanvas.vue           # Main game canvas component
+│   │   ├── SlotControls.vue         # Game controls
+│   │   ├── ConfigPanel.vue          # Configuration panel
+│   │   └── GitHubCorner.vue         # GitHub corner link
 │   ├── stores/          # Pinia stores
-│   │   └── game.ts
+│   │   └── game.ts      # Game state store
 │   ├── utils/           # Utility functions
-│   │   └── preloadAssets.ts  # Asset preloading utilities
+│   │   ├── preloadAssets.ts  # Asset preloading utilities
+│   │   └── soundManager.ts   # Sound management system
+│   ├── views/           # Vue views
+│   │   └── HomeView.vue # Main view
 │   ├── App.vue          # Root component
 │   ├── main.ts          # Application entry
 │   ├── env.d.ts         # TypeScript environment type definitions
@@ -94,6 +106,12 @@ The slot engine follows a clear separation of concerns:
 - ✅ Object pooling for optimal performance
 - ✅ XState state machine for robust state management
 - ✅ Accelerating, spinning, and bounce animations
+- ✅ Sound system with Howler.js integration
+- ✅ Dynamic win detection with path-finding algorithm
+- ✅ Win line visualization with carousel animation
+- ✅ Wildcard symbol support
+- ✅ Real-time configuration panel
+- ✅ FPS monitoring (stats.js)
 
 ### Key Technical Implementations
 
@@ -128,6 +146,7 @@ For the premium "mechanical feel" when the reel stops, we use **GSAP (GreenSock 
 
 - **Easing**: We use `Back.out(0.5)` to create the characteristic recoil/overshoot effect when the reel lands on the target.
 - **Implementation**: The `AnimationSystem` calculates the final resting position and delegates the tweening math to GSAP for silky smooth 60fps easing curves.
+
 
 ### XState State Machine
 
