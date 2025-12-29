@@ -30,6 +30,7 @@ export class Reel {
 
   private preStopCalculated: boolean = false
   private stopOvershoot: number = 0
+  private previousState: string = 'idle'
 
   constructor(app: Application, container: Container, column: number, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
@@ -40,14 +41,21 @@ export class Reel {
     this.scrolling = new ScrollingSystem(app, this.tiles, () => this.getRandomTextureId(), config)
 
     this.stateMachine.start()
+    this.stateMachine.subscribe(this.handleStateChange.bind(this))
+  }
+
+  private handleStateChange(state: ReturnType<typeof this.stateMachine.getSnapshot>): void {
+    const currentState = state.value as string
+    
+    if (currentState === 'idle' && this.previousState !== 'idle' && this._soundPlayer) {
+      this._soundPlayer.play('spin-stop')
+    }
+    
+    this.previousState = currentState
   }
 
   setSoundPlayer(soundPlayer: SoundPlayer | null): void {
     this._soundPlayer = soundPlayer
-  }
-
-  getSoundPlayer(): SoundPlayer | null {
-    return this._soundPlayer
   }
 
   updateConfig(config: SlotConfig) {
@@ -93,66 +101,75 @@ export class Reel {
   }
 
   update = (delta: number = 1): void => {
-    const currentState = this.stateMachine.getSnapshot()
-    const stateValue = currentState.value as string
+    const snapshot = this.stateMachine.getSnapshot()
+    const stateValue = snapshot.value as string
 
-    // Execute corresponding physics logic based on XState state
-    if (stateValue === 'idle') {
-      this.speed = 0
-    } else if (stateValue === 'accelerating') {
-      // Acceleration phase
-      this.speed += this.ACCELERATION * delta
-      if (this.speed >= this.MAX_SPEED) {
-        this.speed = this.MAX_SPEED
-        // Notify state machine: speed has reached maximum
-        this.stateMachine.send({ type: 'SPEED_REACHED' })
-        // Apply blur when reaching high speed
-        this.scrolling.setBlur(true)
-      }
-      // Execute scrolling
-      this.scrolling.updateWithSpeed(this.speed)
-    } else if (stateValue === 'spinning') {
-      // Spinning phase: maintain maximum speed
+    type StateHandler = (delta: number, snapshot: ReturnType<typeof this.stateMachine.getSnapshot>) => void
+    const stateHandlers: Record<string, StateHandler> = {
+      idle: () => this.handleIdleState(),
+      accelerating: (d) => this.handleAcceleratingState(d),
+      spinning: () => this.handleSpinningState(),
+      pre_stop: (_d, s) => this.handlePreStopState(s),
+      bounce: () => this.handleBounceState(),
+    }
+
+    const handler = stateHandlers[stateValue]
+    if (handler) {
+      handler(delta, snapshot)
+    }
+  }
+
+  private handleIdleState(): void {
+    this.speed = 0
+  }
+
+  private handleAcceleratingState(delta: number): void {
+    this.speed += this.ACCELERATION * delta
+    if (this.speed >= this.MAX_SPEED) {
       this.speed = this.MAX_SPEED
-      this.scrolling.updateWithSpeed(this.speed)
-      // Note: Spin duration is checked by Guard on STOP_COMMAND event, using Date.now() - context.spinStartTime
-    } else if (stateValue === 'pre_stop') {
-      // Pre-stop phase: Spin to target symbol
-      if (!this.preStopCalculated) {
-        const targetIndex = currentState.context.targetIndex
-        if (targetIndex !== null) {
-          // Tell scrolling system to prepare to stop at this index
-          this.scrolling.setTargetIndex(targetIndex)
-          this.preStopCalculated = true
-        }
-      }
+      this.stateMachine.send({ type: 'SPEED_REACHED' })
+      this.scrolling.setBlur(true)
+    }
+    this.scrolling.updateWithSpeed(this.speed)
+  }
 
-      // Continue spinning until target arrives and passes center
-      const overshoot = this.scrolling.updateWithSpeed(this.MAX_SPEED)
+  private handleSpinningState(): void {
+    this.speed = this.MAX_SPEED
+    this.scrolling.updateWithSpeed(this.speed)
+  }
 
-      if (overshoot !== null) {
-        this.stopOvershoot = overshoot
-        this.stateMachine.send({ type: 'READY_TO_STOP' })
+  private handlePreStopState(snapshot: ReturnType<typeof this.stateMachine.getSnapshot>): void {
+    if (!this.preStopCalculated) {
+      const targetIndex = snapshot.context.targetIndex
+      if (targetIndex !== null) {
+        this.scrolling.setTargetIndex(targetIndex)
+        this.preStopCalculated = true
       }
-    } else if (stateValue === 'bounce') {
-      // Bounce animation phase
-      if (!this.stopAnimation) {
-        const targetIndex = currentState.context.targetIndex
-        if (targetIndex !== null) {
-          // Unblur before starting stop animation
-          this.scrolling.setBlur(false)
-          this.stopAnimation = new AnimationSystem(this.app, this.tiles, this.config)
-          this.stopAnimation.start(this.stopOvershoot)
-        }
-      }
+    }
 
-      if (this.stopAnimation) {
-        const isComplete = this.stopAnimation.update()
-        if (isComplete) {
-          this.stopAnimation = null
-          // Notify state machine: animation complete
-          this.stateMachine.send({ type: 'ANIMATION_DONE' })
-        }
+    const overshoot = this.scrolling.updateWithSpeed(this.MAX_SPEED)
+    if (overshoot !== null) {
+      this.stopOvershoot = overshoot
+      this.stateMachine.send({ type: 'READY_TO_STOP' })
+    }
+  }
+
+  private handleBounceState(): void {
+    if (!this.stopAnimation) {
+      const snapshot = this.stateMachine.getSnapshot()
+      const targetIndex = snapshot.context.targetIndex
+      if (targetIndex !== null) {
+        this.scrolling.setBlur(false)
+        this.stopAnimation = new AnimationSystem(this.app, this.tiles, this.config)
+        this.stopAnimation.start(this.stopOvershoot)
+      }
+    }
+
+    if (this.stopAnimation) {
+      const isComplete = this.stopAnimation.update()
+      if (isComplete) {
+        this.stopAnimation = null
+        this.stateMachine.send({ type: 'ANIMATION_DONE' })
       }
     }
   }
@@ -170,14 +187,9 @@ export class Reel {
   }
 
   canStop(): boolean {
-    const snapshot = this.stateMachine.getSnapshot()
-    // Manual check of the guard logic 'hasSpunMinDuration' logic
-    // We could try using snapshot.can(), but 'STOP_COMMAND' requires a dummy payload
-    const ctx = snapshot.context
-    if (ctx.spinStartTime === 0) return false
-
-    const elapsed = Date.now() - ctx.spinStartTime
-    return elapsed >= ctx.minSpinDuration
+    const { context } = this.stateMachine.getSnapshot()
+    if (context.spinStartTime === 0) return false
+    return Date.now() - context.spinStartTime >= context.minSpinDuration
   }
 
   /**
@@ -186,27 +198,15 @@ export class Reel {
    */
   getCenterSymbols(rows: number): number[] {
     const { SYMBOL_SIZE, SPACING } = this.config
-    const screenHeight = this.app.screen.height
-    const centerY = screenHeight / 2
-
+    const centerY = this.app.screen.height / 2
     const symbols: number[] = []
 
-    // Get symbols for each visible row
     for (let row = 0; row < rows; row++) {
       const targetY = centerY + (row - (rows - 1) / 2) * (SYMBOL_SIZE + SPACING)
-
-      // Find the tile closest to target Y position
-      let closestTile = this.tiles[0]
-      let minDist = Math.abs(this.tiles[0].sprite.y - targetY)
-
-      for (const tile of this.tiles) {
+      const closestTile = this.tiles.reduce((closest, tile) => {
         const dist = Math.abs(tile.sprite.y - targetY)
-        if (dist < minDist) {
-          minDist = dist
-          closestTile = tile
-        }
-      }
-
+        return dist < Math.abs(closest.sprite.y - targetY) ? tile : closest
+      })
       symbols.push(closestTile.textureId)
     }
 

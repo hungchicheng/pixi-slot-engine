@@ -70,7 +70,6 @@ export class SlotEngine {
     const startX = (screenWidth - totalWidth) / 2
 
     // Calculate total height of the visible area
-
     const visibleHeight = ROWS * SYMBOL_SIZE
     const startY = centerY - visibleHeight / 2
 

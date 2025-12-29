@@ -83,7 +83,7 @@ export class SlotStage {
 
       if (currentState === 'idle') {
         this.currentStopIndex++
-
+        
         if (
           this.currentStopIndex < this.reels.length &&
           this.currentStopIndex < this.resultIndices.length
@@ -94,9 +94,6 @@ export class SlotStage {
           if (this.soundPlayer && this.spinningSoundId !== null) {
             this.soundPlayer.stop('spinning', this.spinningSoundId)
             this.spinningSoundId = null
-          }
-          if (this.soundPlayer) {
-            this.soundPlayer.play('spin-stop')
           }
           this.checkAndDisplayWins()
           this.currentStopIndex = -1
@@ -121,7 +118,6 @@ export class SlotStage {
 
     this.clearWinEffects()
 
-    // Start spinning sound
     if (this.soundPlayer) {
       this.spinningSoundId = this.soundPlayer.play('spinning', { loop: true })
     }
