@@ -59,7 +59,7 @@ export class SlotStage {
     }
   }
 
-  setSoundPlayer(soundPlayer: SoundPlayer | null): void {
+  setSoundPlayer(soundPlayer: SoundPlayer | null) {
     this.soundPlayer = soundPlayer
     this.reels.forEach(reel => reel.setSoundPlayer(soundPlayer))
   }
@@ -154,7 +154,7 @@ export class SlotStage {
     return this.reels.every(reel => reel.canStop())
   }
 
-  private checkAndDisplayWins(): void {
+  private checkAndDisplayWins() {
     const allIdle = this.reels.every(reel => reel.getState() === 'idle')
     if (!allIdle) {
       return
@@ -175,7 +175,7 @@ export class SlotStage {
     }
   }
 
-  private updateWinEffectsForCurrentLine(currentLine: WinningLine | null): void {
+  private updateWinEffectsForCurrentLine(currentLine: WinningLine | null) {
     const currentLinePositions = new Set<string>()
     if (currentLine) {
       currentLine.tiles.forEach(({ column, row }) => {
@@ -208,7 +208,11 @@ export class SlotStage {
     })
   }
 
-  private clearWinEffects(): void {
+  getWinningLines(): WinningLine[] {
+    return this.currentWinningLines
+  }
+
+  private clearWinEffects() {
     if (this.winLineSystem) {
       this.winLineSystem.clearLines()
     }

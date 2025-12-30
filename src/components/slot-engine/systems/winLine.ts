@@ -22,15 +22,15 @@ export class WinLineSystem {
     this.container.addChild(this.graphics)
   }
 
-  updateConfig(config: SlotConfig): void {
+  updateConfig(config: SlotConfig) {
     this.config = config
   }
 
-  setOnLineChangeCallback(callback: (currentLine: WinningLine | null) => void): void {
+  setOnLineChangeCallback(callback: (currentLine: WinningLine | null) => void) {
     this.onLineChangeCallback = callback
   }
 
-  drawWinLines(winningLines: WinningLine[]): void {
+  drawWinLines(winningLines: WinningLine[]) {
     this.stopAnimation()
 
     this.activeLines = winningLines
@@ -44,7 +44,7 @@ export class WinLineSystem {
     this.startAnimation()
   }
 
-  private startAnimation(): void {
+  private startAnimation() {
     this.drawCurrentLine()
 
     if (this.activeLines.length > 1) {
@@ -59,11 +59,11 @@ export class WinLineSystem {
     }
   }
 
-  private isGraphicsValid(): boolean {
+  private isGraphicsValid() {
     return this.graphics !== null && !this.graphics.destroyed
   }
 
-  private stopAnimation(): void {
+  private stopAnimation() {
     if (this.animationTimer !== null) {
       clearInterval(this.animationTimer)
       this.animationTimer = null
@@ -77,7 +77,7 @@ export class WinLineSystem {
     return this.activeLines[this.currentLineIndex]
   }
 
-  private drawCurrentLine(): void {
+  private drawCurrentLine() {
     if (!this.isGraphicsValid()) {
       return
     }
@@ -150,7 +150,7 @@ export class WinLineSystem {
     })
   }
 
-  clearLines(): void {
+  clearLines() {
     this.stopAnimation()
     
     if (this.isGraphicsValid()) {
@@ -161,7 +161,7 @@ export class WinLineSystem {
     this.currentLineIndex = 0
   }
 
-  updateLines(): void {
+  updateLines() {
     if (!this.isGraphicsValid()) {
       return
     }
@@ -171,7 +171,7 @@ export class WinLineSystem {
     }
   }
 
-  destroy(): void {
+  destroy() {
     this.stopAnimation()
     
     if (this.isGraphicsValid()) {

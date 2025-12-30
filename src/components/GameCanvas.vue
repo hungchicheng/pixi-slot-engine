@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { Application, Cache } from 'pixi.js'
+import { Application, Cache, Container } from 'pixi.js'
 import { useGameStore } from '../stores/game'
 import { preloadAllAssets, clearSymbolCache } from '@/utils/preloadAssets'
 import { SlotEngine } from './slot-engine'
 import type { SoundPlayer } from './slot-engine'
+import { CoinParticleSystem } from './coin-system'
 import { soundManager } from '@/utils/soundManager'
 import Stats from 'stats.js'
 
@@ -13,7 +14,7 @@ function createSoundPlayerAdapter(manager: typeof soundManager): SoundPlayer {
     play(id: string, options?: { volume?: number; loop?: boolean }): number | null {
       return manager.play(id, options)
     },
-    stop(id: string, soundId?: number): void {
+    stop(id: string, soundId?: number) {
       manager.stop(id, soundId)
     },
     isPlaying(id: string, soundId?: number): boolean {
@@ -30,6 +31,8 @@ const reelStates = ref<string[]>(Array(gameStore.slotConfig.COLUMNS).fill('idle'
 const canStop = ref(false)
 let stateInterval: ReturnType<typeof setInterval> | null = null
 let stats: Stats | null = null
+let coinParticleSystem: CoinParticleSystem | null = null
+let particleContainer: Container | null = null
 
 
 const updateStates = () => {
@@ -55,7 +58,11 @@ function stopSpin() {
     slotEngine.stopSpin(resultIndices)
     updateStates()
   }
+  if (coinParticleSystem) {
+    coinParticleSystem.clear()
+  }
 }
+
 
 const handleMounted = async () => {
   if (!canvasRef.value) return
@@ -80,6 +87,19 @@ const handleMounted = async () => {
   slotEngine = new SlotEngine(app, gameStore.slotConfig, soundPlayer)
   await slotEngine.initialize()
 
+  particleContainer = new Container()
+  app.stage.addChild(particleContainer)
+
+  coinParticleSystem = new CoinParticleSystem(particleContainer)
+  // 初始化获胜线监听
+  if (slotEngine) {
+    coinParticleSystem.initializeWinLineMonitoring(
+      app,
+      () => slotEngine!.getConfig(),
+      () => slotEngine!.getWinningLines()
+    )
+  }
+
   stats = new Stats()
   stats.showPanel(0)
   stats.dom.style.position = 'fixed'
@@ -92,6 +112,9 @@ const handleMounted = async () => {
   app.ticker.add(() => {
     if (stats) {
       stats.update()
+    }
+    if (coinParticleSystem) {
+      coinParticleSystem.update(1)
     }
   })
 
@@ -127,6 +150,16 @@ const handleUnmounted = () => {
     stats.dom.parentNode.removeChild(stats.dom)
     stats = null
   }
+
+  if (coinParticleSystem) {
+    coinParticleSystem.destroy()
+    coinParticleSystem = null
+  }
+
+  if (particleContainer) {
+    particleContainer.destroy()
+    particleContainer = null
+  }
   
   if (slotEngine) {
     slotEngine.destroy()
@@ -148,6 +181,8 @@ defineExpose({
   stopSpin,
   reelStates,
   canStop,
+  app,
+  slotEngine,
 })
 
 onUnmounted(handleUnmounted)

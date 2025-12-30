@@ -44,7 +44,7 @@ export class Reel {
     this.stateMachine.subscribe(this.handleStateChange.bind(this))
   }
 
-  private handleStateChange(state: ReturnType<typeof this.stateMachine.getSnapshot>): void {
+  private handleStateChange(state: ReturnType<typeof this.stateMachine.getSnapshot>) {
     const currentState = state.value as string
     
     if (currentState === 'idle' && this.previousState !== 'idle' && this._soundPlayer) {
@@ -54,7 +54,7 @@ export class Reel {
     this.previousState = currentState
   }
 
-  setSoundPlayer(soundPlayer: SoundPlayer | null): void {
+  setSoundPlayer(soundPlayer: SoundPlayer | null) {
     this._soundPlayer = soundPlayer
   }
 
@@ -63,7 +63,7 @@ export class Reel {
     this.scrolling.updateConfig(config)
   }
 
-  initialize(): void {
+  initialize() {
     const { SYMBOL_SIZE, ROWS, SPACING } = this.config
     const tilesPerColumn = ROWS + BUFFER_COUNT
     const x = LayoutSystem.calculateXPosition(this.app, this.column, this.config)
@@ -85,17 +85,17 @@ export class Reel {
     }
   }
 
-  startSpin(): void {
+  startSpin() {
     this.stateMachine.send({ type: 'START' })
     this.speed = 0
     this.preStopCalculated = false
   }
 
-  stopSpin(resultIndex: number): void {
+  stopSpin(resultIndex: number) {
     this.stateMachine.send({ type: 'STOP_COMMAND', resultIndex })
   }
 
-  update = (delta: number = 1): void => {
+  update = (delta: number = 1) => {
     const snapshot = this.stateMachine.getSnapshot()
     const stateValue = snapshot.value as string
 
@@ -114,11 +114,11 @@ export class Reel {
     }
   }
 
-  private handleIdleState(): void {
+  private handleIdleState() {
     this.speed = 0
   }
 
-  private handleAcceleratingState(delta: number): void {
+  private handleAcceleratingState(delta: number) {
     this.speed += this.ACCELERATION * delta
     if (this.speed >= this.MAX_SPEED) {
       this.speed = this.MAX_SPEED
@@ -128,12 +128,12 @@ export class Reel {
     this.scrolling.updateWithSpeed(this.speed)
   }
 
-  private handleSpinningState(): void {
+  private handleSpinningState() {
     this.speed = this.MAX_SPEED
     this.scrolling.updateWithSpeed(this.speed)
   }
 
-  private handlePreStopState(snapshot: ReturnType<typeof this.stateMachine.getSnapshot>): void {
+  private handlePreStopState(snapshot: ReturnType<typeof this.stateMachine.getSnapshot>) {
     if (!this.preStopCalculated) {
       const targetIndex = snapshot.context.targetIndex
       if (targetIndex !== null) {
@@ -149,7 +149,7 @@ export class Reel {
     }
   }
 
-  private handleBounceState(): void {
+  private handleBounceState() {
     if (!this.stopAnimation) {
       const snapshot = this.stateMachine.getSnapshot()
       const targetIndex = snapshot.context.targetIndex
@@ -169,7 +169,7 @@ export class Reel {
     }
   }
 
-  updatePositions(): void {
+  updatePositions() {
     LayoutSystem.updateTileXPositions(this.tiles, this.app, this.column, this.config)
   }
 
@@ -215,7 +215,7 @@ export class Reel {
     return this.tiles
   }
 
-  destroy(): void {
+  destroy() {
     this.stateMachine.stop()
 
     this.tiles.forEach(tile => {

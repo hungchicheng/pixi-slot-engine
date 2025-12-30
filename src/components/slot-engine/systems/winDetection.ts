@@ -24,7 +24,7 @@ export class WinDetectionSystem {
     )
   }
 
-  private static getBaseSymbol(symbols: number[], wildSymbolId: number): number {
+  private static getBaseSymbol(symbols: number[], wildSymbolId: number) {
     for (const symbol of symbols) {
       if (!this.isWild(symbol, wildSymbolId)) {
         return symbol
@@ -33,7 +33,7 @@ export class WinDetectionSystem {
     return wildSymbolId
   }
 
-  static checkWinningLines(reels: Reel[], config: SlotConfig): WinningLine[] {
+  static checkWinningLines(reels: Reel[], config: SlotConfig){
     const winningLines: WinningLine[] = []
     const { ROWS, COLUMNS, WILD_SYMBOL_ID } = config
 

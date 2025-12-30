@@ -28,7 +28,7 @@ export class SlotEngine {
     this.gameLoop = new GameLoop(this.app, this.slotStage)
   }
 
-  getConfig(): SlotConfig {
+  getConfig() {
     return this.config
   }
 
@@ -87,12 +87,16 @@ export class SlotEngine {
     this.slotStage.stopSpin(resultIndices)
   }
 
-  getStates(): string[] {
+  getStates() {
     return this.slotStage.getStates()
   }
 
-  canStop(): boolean {
+  canStop() {
     return this.slotStage.canStop()
+  }
+
+  getWinningLines() {
+    return this.slotStage.getWinningLines()
   }
 
   destroy() {

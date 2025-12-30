@@ -15,7 +15,7 @@ export class SoundManager {
   private masterVolume: number = 1.0
   private muted: boolean = false
 
-  register(config: SoundConfig): void {
+  register(config: SoundConfig) {
     if (this.sounds.has(config.id)) {
       console.warn(`Sound "${config.id}" is already registered. Overwriting...`)
     }
@@ -31,7 +31,7 @@ export class SoundManager {
     this.sounds.set(config.id, howl)
   }
 
-  registerMultiple(configs: SoundConfig[]): void {
+  registerMultiple(configs: SoundConfig[]) {
     configs.forEach(config => this.register(config))
   }
 
@@ -52,7 +52,7 @@ export class SoundManager {
     return sound.play()
   }
 
-  stop(id: SoundId, soundId?: number): void {
+  stop(id: SoundId, soundId?: number) {
     const sound = this.sounds.get(id)
     if (!sound) {
       console.warn(`Sound "${id}" not found`)
@@ -66,7 +66,7 @@ export class SoundManager {
     }
   }
 
-  pause(id: SoundId, soundId?: number): void {
+  pause(id: SoundId, soundId?: number) {
     const sound = this.sounds.get(id)
     if (!sound) {
       console.warn(`Sound "${id}" not found`)
@@ -94,7 +94,7 @@ export class SoundManager {
     }
   }
 
-  setVolume(id: SoundId, volume: number): void {
+  setVolume(id: SoundId, volume: number) {
     const sound = this.sounds.get(id)
     if (!sound) {
       console.warn(`Sound "${id}" not found`)
@@ -114,7 +114,7 @@ export class SoundManager {
     return sound.volume() / this.masterVolume
   }
 
-  setMasterVolume(volume: number): void {
+  setMasterVolume(volume: number) {
     this.masterVolume = Math.max(0, Math.min(1, volume))
     this.sounds.forEach(sound => {
       const currentVolume = sound.volume() / (this.masterVolume || 1)
@@ -126,12 +126,12 @@ export class SoundManager {
     return this.masterVolume
   }
 
-  mute(): void {
+  mute() {
     this.muted = true
     this.sounds.forEach(sound => sound.mute(true))
   }
 
-  unmute(): void {
+  unmute() {
     this.muted = false
     this.sounds.forEach(sound => sound.mute(false))
   }
@@ -140,7 +140,7 @@ export class SoundManager {
     return this.muted
   }
 
-  stopAll(): void {
+  stopAll() {
     this.sounds.forEach(sound => sound.stop())
   }
 
@@ -156,7 +156,7 @@ export class SoundManager {
     return sound.playing()
   }
 
-  unload(id: SoundId): void {
+  unload(id: SoundId) {
     const sound = this.sounds.get(id)
     if (sound) {
       sound.unload()
@@ -164,7 +164,7 @@ export class SoundManager {
     }
   }
 
-  unloadAll(): void {
+  unloadAll() {
     this.sounds.forEach(sound => sound.unload())
     this.sounds.clear()
   }

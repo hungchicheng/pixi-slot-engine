@@ -30,17 +30,17 @@ export class ScrollingSystem {
     this.config = config
   }
 
-  setTargetIndex(index: number, minimumRemainingSpins: number = 5): void {
+  setTargetIndex(index: number, minimumRemainingSpins: number = 5) {
     this.targetIndex = index
     this.tilesToStop = minimumRemainingSpins
   }
 
-  update(): void {
+  update() {
     const { SPIN_SPEED } = this.config
     this.updateWithSpeed(SPIN_SPEED)
   }
 
-  updateWithSpeed(speed: number): number | null {
+  updateWithSpeed(speed: number) {
     const { SYMBOL_SIZE } = this.config
     const screenHeight = this.app.screen.height
     const centerY = screenHeight / 2

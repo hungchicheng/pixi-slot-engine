@@ -18,7 +18,7 @@ export class AnimationSystem {
     this.config = config
   }
 
-  start(startOffset: number = 0): void {
+  start(startOffset: number = 0) {
     const { IMPACT_OFFSET } = this.config
 
     this.stopStartY = startOffset
@@ -30,7 +30,7 @@ export class AnimationSystem {
     })
   }
 
-  update = (): boolean => {
+  update = () => {
     const { IMPACT_DURATION, RECOVER_DURATION } = this.config
     const elapsed = Date.now() - this.stopStartTime
 
@@ -54,7 +54,7 @@ export class AnimationSystem {
     return false
   }
 
-  private applyOffset(offset: number): void {
+  private applyOffset(offset: number) {
     this.tiles.forEach(tile => {
       const initialY = (tile as TileWithInitialY).initialY
       if (initialY !== undefined) {
@@ -63,7 +63,7 @@ export class AnimationSystem {
     })
   }
 
-  private finalize(): void {
+  private finalize() {
     this.tiles.forEach(tile => {
       delete (tile as TileWithInitialY).initialY
     })

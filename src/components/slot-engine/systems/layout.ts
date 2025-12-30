@@ -3,14 +3,14 @@ import type { Tile } from '../view/Tile'
 import type { SlotConfig } from '../logic/types'
 
 export class LayoutSystem {
-  static calculateXPosition(app: Application, column: number, config: SlotConfig): number {
+  static calculateXPosition(app: Application, column: number, config: SlotConfig) {
     const { SYMBOL_SIZE, COLUMN_SPACING, COLUMNS } = config
     const totalWidth = COLUMNS * SYMBOL_SIZE + (COLUMNS - 1) * COLUMN_SPACING
     const startX = (app.screen.width - totalWidth) / 2
     return startX + column * (SYMBOL_SIZE + COLUMN_SPACING) + SYMBOL_SIZE / 2
   }
 
-  static findClosestTileToCenter(tiles: Tile[], centerY: number): Tile {
+  static findClosestTileToCenter(tiles: Tile[], centerY: number) {
     return tiles.reduce((closest, current) => {
       const closestDist = Math.abs(closest.sprite.y - centerY)
       const currentDist = Math.abs(current.sprite.y - centerY)
@@ -18,7 +18,7 @@ export class LayoutSystem {
     })
   }
 
-  static alignTilesToCenter(tiles: Tile[], centerY: number, config: SlotConfig): void {
+  static alignTilesToCenter(tiles: Tile[], centerY: number, config: SlotConfig) {
     const { SYMBOL_SIZE } = config
 
     // Re-align tiles to proper positions based on index:
@@ -47,7 +47,7 @@ export class LayoutSystem {
     app: Application,
     column: number,
     config: SlotConfig
-  ): void {
+  ) {
     const x = this.calculateXPosition(app, column, config)
 
     tiles.forEach(tile => {
