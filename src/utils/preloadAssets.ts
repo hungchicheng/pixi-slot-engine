@@ -13,6 +13,7 @@ import symbol6 from '@/assets/images/slot-engine/symbol-6.png'
 import spinningAudio from '@/assets/audio/spinning.mp3'
 import buttonPressAudio from '@/assets/audio/button-press.mp3'
 import spinStopAudio from '@/assets/audio/spin-stop.mp3'
+import coinCollectAudio from '@/assets/audio/coin-collect.mp3'
 
 export const symbolImages = [symbol1, symbol2, symbol3, symbol4, symbol5, symbol6]
 
@@ -102,6 +103,12 @@ export async function preloadSounds() {
     id: 'spin-stop',
     src: spinStopAudio,
     volume: 0.7,
+  })
+
+  soundManager.register({
+    id: 'coin-collect',
+    src: coinCollectAudio,
+    volume: 0.6,
   })
 
   console.log('All sounds preloaded and registered')

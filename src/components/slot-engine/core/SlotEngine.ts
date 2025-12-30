@@ -99,6 +99,10 @@ export class SlotEngine {
     return this.slotStage.getWinningLines()
   }
 
+  hasJustWon() {
+    return this.slotStage.getHasJustWon()
+  }
+
   destroy() {
     this.gameLoop.stop()
     this.slotStage.destroy()

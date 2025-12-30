@@ -14,9 +14,12 @@ export class SlotStage {
   private config: SlotConfig
   private winLineSystem: WinLineSystem
   private currentWinningLines: WinningLine[] = []
+  private lastWinningLines: WinningLine[] = []
   private lastWinCheckState: string = ''
   private soundPlayer: SoundPlayer | null
   private spinningSoundId: number | null = null
+  private hasJustWon: boolean = false
+  private hasSpunAtLeastOnce: boolean = false
 
   constructor(app: Application, container: Container, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
@@ -31,6 +34,17 @@ export class SlotStage {
   }
 
   updateConfig(config: SlotConfig) {
+    if (this.soundPlayer) {
+      this.soundPlayer.stopAll()
+      this.spinningSoundId = null
+    }
+
+    this.hasJustWon = false
+    this.hasSpunAtLeastOnce = false
+    if (this.currentWinningLines.length > 0) {
+      this.lastWinningLines = [...this.currentWinningLines]
+    }
+
     const resetRequired =
       this.config.COLUMNS !== config.COLUMNS ||
       this.config.ROWS !== config.ROWS ||
@@ -54,7 +68,7 @@ export class SlotStage {
       this.reels.forEach(reel => reel.updateConfig(this.config))
       this.winLineSystem.updateConfig(this.config)
       if (this.currentWinningLines.length > 0) {
-        this.winLineSystem.updateLines()
+        this.winLineSystem.drawWinLines(this.currentWinningLines)
       }
     }
   }
@@ -114,6 +128,8 @@ export class SlotStage {
     this.currentStopIndex = -1
     this.resultIndices = []
     this.lastWinCheckState = ''
+    this.hasJustWon = false
+    this.hasSpunAtLeastOnce = true
 
     this.clearWinEffects()
 
@@ -163,6 +179,24 @@ export class SlotStage {
     const winningLines = WinDetectionSystem.checkWinningLines(this.reels, this.config)
     this.currentWinningLines = winningLines
 
+    const hasChanged = 
+      winningLines.length !== this.lastWinningLines.length ||
+      winningLines.some((line, index) => {
+        const lastLine = this.lastWinningLines[index]
+        return !lastLine || 
+          line.index !== lastLine.index ||
+          line.symbolId !== lastLine.symbolId ||
+          line.tiles.length !== lastLine.tiles.length
+      })
+
+    if (winningLines.length > 0 && hasChanged && this.hasSpunAtLeastOnce) {
+      this.hasJustWon = true
+    } else if (winningLines.length === 0) {
+      this.hasJustWon = false
+    }
+
+    this.lastWinningLines = [...winningLines]
+
     if (winningLines.length > 0) {
       if (this.winLineSystem) {
         this.winLineSystem.drawWinLines(winningLines)
@@ -210,6 +244,10 @@ export class SlotStage {
 
   getWinningLines(): WinningLine[] {
     return this.currentWinningLines
+  }
+
+  getHasJustWon(): boolean {
+    return this.hasJustWon
   }
 
   private clearWinEffects() {

@@ -20,6 +20,9 @@ function createSoundPlayerAdapter(manager: typeof soundManager): SoundPlayer {
     isPlaying(id: string, soundId?: number): boolean {
       return manager.isPlaying(id, soundId)
     },
+    stopAll() {
+      manager.stopAll()
+    },
   }
 }
 
@@ -91,12 +94,12 @@ const handleMounted = async () => {
   app.stage.addChild(particleContainer)
 
   coinParticleSystem = new CoinParticleSystem(particleContainer)
-  // 初始化获胜线监听
   if (slotEngine) {
     coinParticleSystem.initializeWinLineMonitoring(
       app,
       () => slotEngine!.getConfig(),
-      () => slotEngine!.getWinningLines()
+      () => slotEngine!.getWinningLines(),
+      () => slotEngine!.hasJustWon()
     )
   }
 

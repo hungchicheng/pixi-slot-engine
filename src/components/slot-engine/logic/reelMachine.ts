@@ -49,7 +49,7 @@ export const reelMachine = setup({
   context: {
     targetIndex: null,
     spinStartTime: 0,
-    minSpinDuration: 2000,
+    minSpinDuration: 300,
   },
   states: {
     idle: {

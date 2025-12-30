@@ -3,16 +3,17 @@ import { CoinParticlePool } from './CoinParticlePool'
 import type { ParticleConfig } from './CoinParticle'
 import type { WinningLine } from '../slot-engine'
 import type { SlotConfig } from '../slot-engine/logic/types'
+import { soundManager } from '@/utils/soundManager'
 
 export class CoinParticleSystem {
   private container: Container
   private pool: CoinParticlePool
   private defaultConfig: ParticleConfig
   private app: Application | null = null
-  private getConfig: (() => SlotConfig) | null = null
   private getWinningLines: (() => WinningLine[]) | null = null
+  private hasJustWon: (() => boolean) | null = null
   private winCheckInterval: ReturnType<typeof setInterval> | null = null
-  private lastWinningLines: WinningLine[] = []
+  private lastHasJustWon: boolean = false
 
   constructor(container: Container) {
     this.container = container
@@ -31,86 +32,64 @@ export class CoinParticleSystem {
     }
   }
 
-  /**
-   * Initialize winning line monitoring
-   */
   initializeWinLineMonitoring(
     app: Application,
-    getConfig: () => SlotConfig,
-    getWinningLines: () => WinningLine[]
+    _getConfig: () => SlotConfig,
+    getWinningLines: () => WinningLine[],
+    hasJustWon: () => boolean
   ) {
     this.app = app
-    this.getConfig = getConfig
     this.getWinningLines = getWinningLines
+    this.hasJustWon = hasJustWon
+    if (this.hasJustWon) {
+      this.lastHasJustWon = this.hasJustWon()
+    }
     this.startWinLineMonitoring()
   }
 
-  /**
-   * Start monitoring winning line changes
-   */
   private startWinLineMonitoring() {
     if (this.winCheckInterval) {
       return
     }
 
     this.winCheckInterval = setInterval(() => {
-      if (!this.getWinningLines) return
+      if (!this.hasJustWon) return
 
-      const winningLines = this.getWinningLines()
-      // Check if winning lines have changed (by comparing length and content)
-      const hasChanged = 
-        winningLines.length !== this.lastWinningLines.length ||
-        winningLines.some((line, index) => {
-          const lastLine = this.lastWinningLines[index]
-          return !lastLine || 
-            line.index !== lastLine.index ||
-            line.symbolId !== lastLine.symbolId ||
-            line.tiles.length !== lastLine.tiles.length
-        })
-
-      if (winningLines.length > 0 && hasChanged) {
-        this.triggerCoinBurst(winningLines)
-        this.lastWinningLines = [...winningLines]
-      } else if (winningLines.length === 0) {
-        this.lastWinningLines = []
+      const justWon = this.hasJustWon()
+      if (justWon && !this.lastHasJustWon) {
+        const winningLines = this.getWinningLines?.() || []
+        if (winningLines.length > 0) {
+          this.triggerCoinBurst(winningLines)
+        }
       }
+      this.lastHasJustWon = justWon
     }, 100)
   }
 
-  /**
-   * Stop monitoring winning line changes
-   */
   private stopWinLineMonitoring() {
     if (this.winCheckInterval) {
       clearInterval(this.winCheckInterval)
       this.winCheckInterval = null
     }
-    this.lastWinningLines = []
+    this.lastHasJustWon = false
   }
 
-  /**
-   * Trigger coin particle burst effect based on winning lines
-   */
   private triggerCoinBurst(winningLines: WinningLine[]) {
-    if (!this.app || !this.getConfig) return
+    if (!this.app || winningLines.length === 0) return
 
-    const screenWidth = this.app.screen.width
-
-    // Only trigger once, regardless of how many winning lines
-    if (winningLines.length === 0) return
-
-    // Fall from top of screen downward
-    const centerX = screenWidth / 2 // Center horizontally
-    const startY = 20 // Start from top with small offset
-
+    const centerX = this.app.screen.width / 2
+    const startY = 20
     const particleCount = 20 + Math.floor(Math.random() * 15)
+
     this.burst(centerX, startY, particleCount, {
       minSpeed: 1,
       maxSpeed: 3,
-      spreadAngle: 120, // Wider spread angle for more horizontal spread
-      initialUpwardVelocity: 0, // No initial upward velocity
-      gravity: 0.2, // Reduced gravity for slower falling speed
+      spreadAngle: 120,
+      initialUpwardVelocity: 0,
+      gravity: 0.2,
     })
+
+    soundManager.play('coin-collect')
   }
 
   burst(x: number, y: number, count: number, config?: Partial<ParticleConfig>) {
@@ -153,8 +132,9 @@ export class CoinParticleSystem {
     this.clear()
     this.pool.destroy()
     this.app = null
-    this.getConfig = null
     this.getWinningLines = null
+    this.hasJustWon = null
+    this.lastHasJustWon = false
   }
 }
 
