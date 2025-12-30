@@ -51,13 +51,17 @@ slotEngine/
 │   │   │   │   ├── layout.ts        # Initial position calculations
 │   │   │   │   ├── animation.ts     # Bounce animation formulas
 │   │   │   │   ├── winDetection.ts  # Win detection algorithm
-│   │   │   │   └── winLine.ts       # Win line drawing system
+│   │   │   │   └── winLine.ts       # Win line system (tile highlighting)
 │   │   │   ├── view/    # Muscle (View layer - Pixi components)
 │   │   │   │   ├── SlotStage.ts     # Main slot stage (manages reels)
 │   │   │   │   ├── Reel.ts          # Single reel container
 │   │   │   │   ├── Tile.ts          # Single symbol sprite
 │   │   │   │   └── types.ts         # View type definitions
 │   │   │   └── index.ts             # Engine exports
+│   │   ├── coin-system/             # Coin particle effect system
+│   │   │   ├── CoinParticle.ts      # Individual coin particle
+│   │   │   ├── CoinParticlePool.ts  # Particle object pool
+│   │   │   └── index.ts             # Coin particle system
 │   │   ├── GameCanvas.vue           # Main game canvas component
 │   │   ├── SlotControls.vue         # Game controls
 │   │   ├── ConfigPanel.vue          # Configuration panel
@@ -108,7 +112,8 @@ The slot engine follows a clear separation of concerns:
 - ✅ Accelerating, spinning, and bounce animations
 - ✅ Sound system with Howler.js integration
 - ✅ Dynamic win detection with path-finding algorithm
-- ✅ Win line visualization with carousel animation
+- ✅ Win tile highlighting
+- ✅ Coin particle effects on win
 - ✅ Wildcard symbol support
 - ✅ Real-time configuration panel
 - ✅ FPS monitoring (stats.js)
@@ -146,6 +151,15 @@ For the premium "mechanical feel" when the reel stops, we use **GSAP (GreenSock 
 
 - **Easing**: We use `Back.out(0.5)` to create the characteristic recoil/overshoot effect when the reel lands on the target.
 - **Implementation**: The `AnimationSystem` calculates the final resting position and delegates the tweening math to GSAP for silky smooth 60fps easing curves.
+
+#### 4. Coin Particle System
+
+A particle effect system that triggers when winning lines are detected. Uses object pooling for optimal performance.
+
+- **Graphics**: Programmatically generated yellow circle graphics (no image assets)
+- **Behavior**: Particles fall from top center of screen with horizontal spread
+- **State Management**: Integrated with slot-engine's `hasJustWon` state to prevent triggering on initial load or config changes
+- **Object Pooling**: Reuses particle objects to minimize garbage collection
 
 
 ### XState State Machine
