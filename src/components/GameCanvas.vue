@@ -42,6 +42,10 @@ const updateStates = () => {
   if (slotEngine) {
     reelStates.value = slotEngine.getStates()
     canStop.value = slotEngine.canStop()
+    const spinning = reelStates.value.some(state => state === 'accelerating' || state === 'spinning')
+    if (gameStore.isSpinning !== spinning) {
+      gameStore.setIsSpinning(spinning)
+    }
   }
 }
 
@@ -101,6 +105,10 @@ const handleMounted = async () => {
       () => slotEngine!.getWinningLines(),
       () => slotEngine!.hasJustWon()
     )
+
+    slotEngine.setOnSpinCompleteCallback(() => {
+      gameStore.completeSpin()
+    })
   }
 
   stats = new Stats()
@@ -127,7 +135,17 @@ const handleMounted = async () => {
     }
   }, { deep: true })
 
-  stateInterval = setInterval(updateStates, 100)
+  watch(() => gameStore.pendingSpin, (pending) => {
+    if (pending && slotEngine && !gameStore.isSpinning) {
+      if (gameStore.startSpin()) {
+        startSpin()
+      }
+    }
+  })
+
+  stateInterval = setInterval(() => {
+    updateStates()
+  }, 100)
 
 
 

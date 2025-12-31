@@ -10,6 +10,9 @@ export const useGameStore = defineStore('game', () => {
     ...defaultSlotConfig,
   })
 
+  const isSpinning = ref<boolean>(false)
+  const pendingSpin = ref<boolean>(false)
+
   function incrementScore() {
     score.value++
   }
@@ -26,13 +29,39 @@ export const useGameStore = defineStore('game', () => {
     Object.assign(slotConfig, defaultSlotConfig)
   }
 
+  function requestSpin() {
+    if (isSpinning.value) return false
+    pendingSpin.value = true
+    return true
+  }
+
+  function startSpin() {
+    isSpinning.value = true
+    pendingSpin.value = false
+    return true
+  }
+
+  function completeSpin() {
+    isSpinning.value = false
+  }
+
+  function setIsSpinning(value: boolean) {
+    isSpinning.value = value
+  }
+
   return {
     score,
     slotConfig,
+    isSpinning,
+    pendingSpin,
 
     incrementScore,
     resetScore,
     updateSlotConfig,
     resetSlotConfig,
+    requestSpin,
+    startSpin,
+    completeSpin,
+    setIsSpinning,
   }
 })

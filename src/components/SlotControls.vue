@@ -31,9 +31,7 @@ const isStopping = computed(() => {
 
 function handleStartSpin() {
   soundManager.play('button-press')
-  if (gameCanvasRef?.value) {
-    gameCanvasRef.value.startSpin()
-  }
+  gameStore.requestSpin()
 }
 
 function handleStopSpin() {
@@ -66,7 +64,6 @@ function handleStopSpin() {
           <span v-else-if="isSpinning">Stop Spin</span>
           <span v-else>Start Spin</span>
         </button>
-
       </div>
     </div>
   </div>

@@ -103,6 +103,10 @@ export class SlotEngine {
     return this.slotStage.getHasJustWon()
   }
 
+  setOnSpinCompleteCallback(callback: (winningLines: any[]) => void) {
+    this.slotStage.setOnSpinCompleteCallback(callback)
+  }
+
   destroy() {
     this.gameLoop.stop()
     this.slotStage.destroy()

@@ -20,6 +20,7 @@ export class SlotStage {
   private spinningSoundId: number | null = null
   private hasJustWon: boolean = false
   private hasSpunAtLeastOnce: boolean = false
+  private onSpinCompleteCallback?: (winningLines: WinningLine[]) => void
 
   constructor(app: Application, container: Container, config: SlotConfig, soundPlayer?: SoundPlayer) {
     this.app = app
@@ -78,6 +79,10 @@ export class SlotStage {
     this.reels.forEach(reel => reel.setSoundPlayer(soundPlayer))
   }
 
+  setOnSpinCompleteCallback(callback: (winningLines: WinningLine[]) => void) {
+    this.onSpinCompleteCallback = callback
+  }
+
   initialize() {
     for (let col = 0; col < this.config.COLUMNS; col++) {
       const reel = new Reel(this.app, this.container, col, this.config, this.soundPlayer || undefined)
@@ -109,6 +114,9 @@ export class SlotStage {
             this.spinningSoundId = null
           }
           this.checkAndDisplayWins()
+          if (this.onSpinCompleteCallback) {
+            this.onSpinCompleteCallback(this.currentWinningLines)
+          }
           this.currentStopIndex = -1
           this.resultIndices = []
         }
@@ -119,6 +127,9 @@ export class SlotStage {
       
       if (allIdle && currentState !== this.lastWinCheckState) {
         this.checkAndDisplayWins()
+        if (this.onSpinCompleteCallback) {
+          this.onSpinCompleteCallback(this.currentWinningLines)
+        }
         this.lastWinCheckState = currentState
       }
     }
