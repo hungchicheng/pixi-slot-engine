@@ -12,11 +12,7 @@ export class WinDetectionSystem {
     return symbolId === wildSymbolId
   }
 
-  private static symbolsMatch(
-    symbol1: number,
-    symbol2: number,
-    wildSymbolId: number
-  ): boolean {
+  private static symbolsMatch(symbol1: number, symbol2: number, wildSymbolId: number): boolean {
     return (
       this.isWild(symbol1, wildSymbolId) ||
       this.isWild(symbol2, wildSymbolId) ||
@@ -33,7 +29,7 @@ export class WinDetectionSystem {
     return wildSymbolId
   }
 
-  static checkWinningLines(reels: Reel[], config: SlotConfig){
+  static checkWinningLines(reels: Reel[], config: SlotConfig) {
     const winningLines: WinningLine[] = []
     const { ROWS, COLUMNS, WILD_SYMBOL_ID } = config
 
@@ -53,21 +49,14 @@ export class WinDetectionSystem {
     let lineIndex = 0
 
     for (let startRow = 0; startRow < ROWS; startRow++) {
-      const paths = this.findAllPaths(
-        centerTiles,
-        0,
-        startRow,
-        COLUMNS,
-        ROWS,
-        WILD_SYMBOL_ID
-      )
+      const paths = this.findAllPaths(centerTiles, 0, startRow, COLUMNS, ROWS, WILD_SYMBOL_ID)
 
-      paths.forEach((path) => {
+      paths.forEach(path => {
         const pathKey = path.map(({ col, row }) => `${col}-${row}`).join(',')
-        
+
         if (!pathSet.has(pathKey)) {
           pathSet.add(pathKey)
-          
+
           const baseSymbol = this.getBaseSymbol(
             path.map(({ col, row }) => centerTiles[col][row]),
             WILD_SYMBOL_ID
@@ -155,8 +144,7 @@ export class WinDetectionSystem {
       }
 
       const canContinue =
-        nextBaseSymbol === null ||
-        this.symbolsMatch(nextBaseSymbol, nextSymbol, wildSymbolId)
+        nextBaseSymbol === null || this.symbolsMatch(nextBaseSymbol, nextSymbol, wildSymbolId)
 
       if (canContinue) {
         const subPaths = this.findAllPaths(
@@ -176,7 +164,4 @@ export class WinDetectionSystem {
 
     return allPaths
   }
-
 }
-
-

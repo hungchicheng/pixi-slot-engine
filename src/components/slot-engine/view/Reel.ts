@@ -32,7 +32,13 @@ export class Reel {
   private stopOvershoot: number = 0
   private previousState: string = 'idle'
 
-  constructor(app: Application, container: Container, column: number, config: SlotConfig, soundPlayer?: SoundPlayer) {
+  constructor(
+    app: Application,
+    container: Container,
+    column: number,
+    config: SlotConfig,
+    soundPlayer?: SoundPlayer
+  ) {
     this.app = app
     this.container = container
     this.column = column
@@ -46,11 +52,11 @@ export class Reel {
 
   private handleStateChange(state: ReturnType<typeof this.stateMachine.getSnapshot>) {
     const currentState = state.value as string
-    
+
     if (currentState === 'idle' && this.previousState !== 'idle' && this._soundPlayer) {
       this._soundPlayer.play('spin-stop')
     }
-    
+
     this.previousState = currentState
   }
 
@@ -99,10 +105,13 @@ export class Reel {
     const snapshot = this.stateMachine.getSnapshot()
     const stateValue = snapshot.value as string
 
-    type StateHandler = (delta: number, snapshot: ReturnType<typeof this.stateMachine.getSnapshot>) => void
+    type StateHandler = (
+      delta: number,
+      snapshot: ReturnType<typeof this.stateMachine.getSnapshot>
+    ) => void
     const stateHandlers: Record<string, StateHandler> = {
       idle: () => this.handleIdleState(),
-      accelerating: (d) => this.handleAcceleratingState(d),
+      accelerating: d => this.handleAcceleratingState(d),
       spinning: () => this.handleSpinningState(),
       pre_stop: (_d, s) => this.handlePreStopState(s),
       bounce: () => this.handleBounceState(),

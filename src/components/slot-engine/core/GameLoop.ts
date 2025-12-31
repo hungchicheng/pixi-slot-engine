@@ -14,7 +14,7 @@ export class GameLoop {
     if (this.animationId !== null) return
 
     let lastTime = performance.now()
-    
+
     const animate = (currentTime: number) => {
       if (!this.isPaused) {
         const delta = (currentTime - lastTime) / 16.67 // 60FPS
@@ -42,4 +42,3 @@ export class GameLoop {
     }
   }
 }
-

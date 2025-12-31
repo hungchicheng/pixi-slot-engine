@@ -13,4 +13,3 @@ export interface TileWithInitialY extends ReelTile {
 export interface TileWithTarget extends ReelTile {
   isTarget?: boolean
 }
-

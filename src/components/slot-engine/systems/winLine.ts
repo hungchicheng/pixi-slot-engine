@@ -97,11 +97,11 @@ export class WinLineSystem {
 
   clearLines() {
     this.stopAnimation()
-    
+
     if (this.isGraphicsValid()) {
       this.graphics.clear()
     }
-    
+
     this.activeLines = []
     this.currentLineIndex = 0
   }
@@ -110,7 +110,7 @@ export class WinLineSystem {
     if (!this.isGraphicsValid()) {
       return
     }
-    
+
     if (this.activeLines.length > 0) {
       this.drawCurrentLine()
     }
@@ -118,7 +118,7 @@ export class WinLineSystem {
 
   destroy() {
     this.stopAnimation()
-    
+
     if (this.isGraphicsValid()) {
       this.graphics.clear()
       if (this.graphics.parent === this.container) {
@@ -126,8 +126,7 @@ export class WinLineSystem {
       }
       this.graphics.destroy()
     }
-    
+
     this.graphics = null as any
   }
 }
-

@@ -42,12 +42,7 @@ export class LayoutSystem {
     })
   }
 
-  static updateTileXPositions(
-    tiles: Tile[],
-    app: Application,
-    column: number,
-    config: SlotConfig
-  ) {
+  static updateTileXPositions(tiles: Tile[], app: Application, column: number, config: SlotConfig) {
     const x = this.calculateXPosition(app, column, config)
 
     tiles.forEach(tile => {

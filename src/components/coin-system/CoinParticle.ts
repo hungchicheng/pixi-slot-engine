@@ -25,7 +25,7 @@ export class CoinParticle {
     this.graphics.beginFill(0xffd700) // Gold color
     this.graphics.drawCircle(0, 0, this.radius)
     this.graphics.endFill()
-    
+
     // Add highlight effect
     this.graphics.beginFill(0xffff99, 0.6) // Light yellow highlight
     this.graphics.drawCircle(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.4)
@@ -45,7 +45,7 @@ export class CoinParticle {
     const spreadAngleRad = (config.spreadAngle / 2) * (Math.PI / 180)
     const angle = baseAngle + (Math.random() * spreadAngleRad * 2 - spreadAngleRad)
     const speed = config.minSpeed + Math.random() * (config.maxSpeed - config.minSpeed)
-    
+
     this.vx = Math.cos(angle) * speed
     // Initial velocity should be positive (downward in screen coordinates)
     this.vy = Math.sin(angle) * speed + config.initialUpwardVelocity
@@ -101,4 +101,3 @@ export interface ParticleConfig {
   minScale: number
   maxScale: number
 }
-

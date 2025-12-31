@@ -4,4 +4,3 @@ export interface SoundPlayer {
   isPlaying(id: string, soundId?: number): boolean
   stopAll(): void
 }
-

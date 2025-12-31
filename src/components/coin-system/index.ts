@@ -107,11 +107,11 @@ export class CoinParticleSystem {
 
   update(delta: number) {
     const activeParticles = this.pool.getActiveParticles()
-    
+
     for (let i = activeParticles.length - 1; i >= 0; i--) {
       const particle = activeParticles[i]
       const isAlive = particle.update(delta)
-      
+
       if (!isAlive) {
         this.container.removeChild(particle.graphics)
         this.pool.release(particle)
@@ -137,4 +137,3 @@ export class CoinParticleSystem {
     this.lastHasJustWon = false
   }
 }
-

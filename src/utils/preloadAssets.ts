@@ -115,9 +115,6 @@ export async function preloadSounds() {
 }
 
 export async function preloadAllAssets(app: Application) {
-  await Promise.all([
-    preloadSymbolImages(app),
-    preloadSounds(),
-  ])
+  await Promise.all([preloadSymbolImages(app), preloadSounds()])
   console.log('All assets preloaded')
 }

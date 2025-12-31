@@ -26,7 +26,7 @@ export class AnimationSystem {
     this.stopStartTime = Date.now()
 
     this.tiles.forEach(tile => {
-      (tile as TileWithInitialY).initialY = tile.sprite.y
+      ;(tile as TileWithInitialY).initialY = tile.sprite.y
     })
   }
 

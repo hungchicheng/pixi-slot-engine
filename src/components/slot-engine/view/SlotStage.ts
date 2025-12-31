@@ -22,14 +22,19 @@ export class SlotStage {
   private hasSpunAtLeastOnce: boolean = false
   private onSpinCompleteCallback?: (winningLines: WinningLine[]) => void
 
-  constructor(app: Application, container: Container, config: SlotConfig, soundPlayer?: SoundPlayer) {
+  constructor(
+    app: Application,
+    container: Container,
+    config: SlotConfig,
+    soundPlayer?: SoundPlayer
+  ) {
     this.app = app
     this.container = container
     this.config = { ...config }
     this.soundPlayer = soundPlayer || null
     this.winLineSystem = new WinLineSystem(app, container, config)
-    
-    this.winLineSystem.setOnLineChangeCallback((currentLine) => {
+
+    this.winLineSystem.setOnLineChangeCallback(currentLine => {
       this.updateWinEffectsForCurrentLine(currentLine)
     })
   }
@@ -54,11 +59,11 @@ export class SlotStage {
       this.config.COLUMN_SPACING !== config.COLUMN_SPACING
 
     this.config = { ...config }
-    
+
     this.winLineSystem.destroy()
     this.winLineSystem = new WinLineSystem(this.app, this.container, this.config)
-    
-    this.winLineSystem.setOnLineChangeCallback((currentLine) => {
+
+    this.winLineSystem.setOnLineChangeCallback(currentLine => {
       this.updateWinEffectsForCurrentLine(currentLine)
     })
 
@@ -85,7 +90,13 @@ export class SlotStage {
 
   initialize() {
     for (let col = 0; col < this.config.COLUMNS; col++) {
-      const reel = new Reel(this.app, this.container, col, this.config, this.soundPlayer || undefined)
+      const reel = new Reel(
+        this.app,
+        this.container,
+        col,
+        this.config,
+        this.soundPlayer || undefined
+      )
       reel.initialize()
       this.reels.push(reel)
     }
@@ -102,7 +113,7 @@ export class SlotStage {
 
       if (currentState === 'idle') {
         this.currentStopIndex++
-        
+
         if (
           this.currentStopIndex < this.reels.length &&
           this.currentStopIndex < this.resultIndices.length
@@ -124,7 +135,7 @@ export class SlotStage {
     } else {
       const allIdle = this.reels.every(reel => reel.getState() === 'idle')
       const currentState = this.reels.map(reel => reel.getState()).join('|')
-      
+
       if (allIdle && currentState !== this.lastWinCheckState) {
         this.checkAndDisplayWins()
         if (this.onSpinCompleteCallback) {
@@ -147,7 +158,7 @@ export class SlotStage {
     if (this.soundPlayer) {
       this.spinningSoundId = this.soundPlayer.play('spinning', { loop: true })
     }
-    
+
     this.reels.forEach(reel => {
       reel.startSpin()
     })
@@ -190,14 +201,16 @@ export class SlotStage {
     const winningLines = WinDetectionSystem.checkWinningLines(this.reels, this.config)
     this.currentWinningLines = winningLines
 
-    const hasChanged = 
+    const hasChanged =
       winningLines.length !== this.lastWinningLines.length ||
       winningLines.some((line, index) => {
         const lastLine = this.lastWinningLines[index]
-        return !lastLine || 
+        return (
+          !lastLine ||
           line.index !== lastLine.index ||
           line.symbolId !== lastLine.symbolId ||
           line.tiles.length !== lastLine.tiles.length
+        )
       })
 
     if (winningLines.length > 0 && hasChanged && this.hasSpunAtLeastOnce) {

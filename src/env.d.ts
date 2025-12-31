@@ -37,5 +37,3 @@ declare global {
     __PIXI_APP__?: any
   }
 }
-
-
